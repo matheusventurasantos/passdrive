@@ -1,0 +1,48 @@
+name: passdrive
+description: Onboarding inicial do Passdrive.
+publish_to: "none"
+version: 1.0.0+1
+
+environment:
+  sdk: ">=3.12.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cryptography: ^2.9.0
+  cryptography_flutter: ^2.3.4
+  flutter_svg: ^2.0.10+1
+  pointycastle: ^4.0.0
+  flutter_secure_storage: ^10.0.0
+  qr_flutter: ^4.1.0
+  mobile_scanner: ^7.0.0
+  path: ^1.9.1
+  path_provider: ^2.1.6
+  sqflite: ^2.4.3
+  sqflite_common: ^2.5.11
+  sqflite_common_ffi: ^2.4.2+1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.2
+
+flutter:
+  uses-material-design: true
+
+  assets:
+    - cofre.svg
+    - etapa3criptografia.svg
+    - logo.svg
+    - cadeado.svg
+    - prendedocadeado.svg
+
+  fonts:
+    - family: Kumbh Sans
+      fonts:
+        - asset: assets/fonts/KumbhSans-Regular.ttf
+          weight: 400
+        - asset: assets/fonts/KumbhSans-Medium.ttf
+          weight: 500
+        - asset: assets/fonts/KumbhSans-Bold.ttf
+          weight: 700
