@@ -252,7 +252,10 @@ class _VaultGatePageState extends State<VaultGatePage> {
       return Scaffold(
         body: DesktopAuthLayout(
           title: 'Abrir cofre',
-          illustration: SvgPicture.asset('cofre.svg', width: 320),
+          illustration: SvgPicture.asset(
+            'assets/illustrations/cofre.svg',
+            width: 320,
+          ),
           child: hasVault == null
               ? Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
@@ -417,7 +420,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                         Align(
                           alignment: Alignment.centerLeft,
                           child: SvgPicture.asset(
-                            'logo.svg',
+                            'assets/branding/logo.svg',
                             width: 36,
                             height: 36,
                           ),
@@ -573,7 +576,7 @@ class _VaultMark extends StatelessWidget {
   Widget build(BuildContext context) {
     return Center(
       child: SvgPicture.asset(
-        'cofre.svg',
+        'assets/illustrations/cofre.svg',
         height: MediaQuery.sizeOf(context).height < 700 ? 100 : 150,
       ),
     );

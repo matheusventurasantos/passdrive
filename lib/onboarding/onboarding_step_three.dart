@@ -247,7 +247,7 @@ class _AnimatedKeyIllustrationState extends State<_AnimatedKeyIllustration>
                   children: [
                     Positioned.fill(
                       child: SvgPicture.asset(
-                        'etapa3criptografia.svg',
+                        'assets/illustrations/etapa3criptografia.svg',
                         fit: BoxFit.fill,
                       ),
                     ),

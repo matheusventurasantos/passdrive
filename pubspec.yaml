@@ -31,11 +31,8 @@ flutter:
   uses-material-design: true
 
   assets:
-    - cofre.svg
-    - etapa3criptografia.svg
-    - logo.svg
-    - cadeado.svg
-    - prendedocadeado.svg
+    - assets/branding/logo.svg
+    - assets/illustrations/
 
   fonts:
     - family: Kumbh Sans

@@ -5,4 +5,10 @@ build/
 pubspec.lock
 .idea/
 *.iml
+.flutter-plugins-dependencies
 
+# Local design references and planning audits
+referencia*.png
+AUDITORIA_*.md
+ROADMAP_*.md
+SINCRONIZACAO_*.md

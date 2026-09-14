@@ -30,7 +30,11 @@ class DesktopSidebar extends StatelessWidget {
           padding: const EdgeInsets.fromLTRB(24, 28, 24, 36),
           child: Row(
             children: [
-              SvgPicture.asset('logo.svg', width: 38, height: 38),
+              SvgPicture.asset(
+                'assets/branding/logo.svg',
+                width: 38,
+                height: 38,
+              ),
               const SizedBox(width: 6),
               const Flexible(
                 child: Text(

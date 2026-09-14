@@ -344,7 +344,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
                                       borderRadius: BorderRadius.circular(10),
                                     ),
                                     child: SvgPicture.asset(
-                                      'logo.svg',
+                                      'assets/branding/logo.svg',
                                       colorFilter: const ColorFilter.mode(
                                         Colors.black,
                                         BlendMode.srcIn,

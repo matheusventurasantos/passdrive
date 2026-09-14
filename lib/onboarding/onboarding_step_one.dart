@@ -103,7 +103,10 @@ class _SafeIllustration extends StatelessWidget {
                   clipBehavior: Clip.none,
                   children: [
                     Positioned.fill(
-                      child: SvgPicture.asset('cofre.svg', fit: BoxFit.fill),
+                      child: SvgPicture.asset(
+                        'assets/illustrations/cofre.svg',
+                        fit: BoxFit.fill,
+                      ),
                     ),
                     const Positioned.fill(child: _AnimatedSafeStars()),
                     const Positioned(
@@ -307,7 +310,7 @@ class _SwingingLockState extends State<_SwingingLock>
           children: [
             Positioned.fill(
               child: SvgPicture.asset(
-                'cadeado.svg',
+                'assets/illustrations/cadeado.svg',
                 width: 50,
                 height: 70,
                 fit: BoxFit.fill,
@@ -317,7 +320,7 @@ class _SwingingLockState extends State<_SwingingLock>
               left: 22,
               top: -6,
               child: SvgPicture.asset(
-                'prendedocadeado.svg',
+                'assets/illustrations/prendedocadeado.svg',
                 width: 7,
                 height: 30,
               ),

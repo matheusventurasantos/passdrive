@@ -14,7 +14,11 @@ class OnboardingHeader extends StatelessWidget {
       height: 36,
       child: Row(
         children: [
-          SizedBox(width: 32, height: 32, child: SvgPicture.asset('logo.svg')),
+          SizedBox(
+            width: 32,
+            height: 32,
+            child: SvgPicture.asset('assets/branding/logo.svg'),
+          ),
           Expanded(
             child: Text(
               '$step de 3',
