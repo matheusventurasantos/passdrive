@@ -12,3 +12,6 @@ referencia*.png
 AUDITORIA_*.md
 ROADMAP_*.md
 SINCRONIZACAO_*.md
+
+# Website kept locally, outside the app repository
+site/
