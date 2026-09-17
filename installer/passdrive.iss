@@ -1,12 +1,12 @@
 [Setup]
 AppId={{C4B0A27B-1F56-4D18-9C01-PASSDRIVE100}
 AppName=PassDrive
-AppVersion=1.0.0
+AppVersion=1.0.1
 AppPublisher=PassDrive
 DefaultDirName={autopf}\PassDrive
 DefaultGroupName=PassDrive
 OutputDir=..\build\installer
-OutputBaseFilename=PassDrive-Setup-1.0.0
+OutputBaseFilename=PassDrive-Setup-1.0.1
 Compression=lzma
 SolidCompression=yes
 WizardStyle=modern
