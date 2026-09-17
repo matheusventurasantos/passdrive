@@ -2,6 +2,7 @@ import 'package:flutter/material.dart' hide showModalBottomSheet;
 import '../windows/adaptive_sheet.dart';
 import '../windows/desktop_layout.dart';
 import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../theme/app_colors.dart';
 import '../theme/app_typography.dart';
@@ -147,12 +148,7 @@ class _SettingsList extends StatelessWidget {
         icon: Icons.info_outline,
         title: 'Sobre',
         description: 'Versão, política e informações do app',
-        onTap: () => _showInfo(
-          context,
-          title: 'PassDrive',
-          message:
-              'Versão 1.0.0\n\nO PassDrive guarda suas credenciais em um cofre local criptografado. A publicação oficial ainda depende da política de privacidade e da assinatura de produção.',
-        ),
+        onTap: () => _showAbout(context),
       ),
     ];
     if (isWindowsDesktop) {
@@ -167,6 +163,186 @@ class _SettingsList extends StatelessWidget {
       );
     }
     return Column(children: items);
+  }
+}
+
+void _showAbout(BuildContext context) {
+  showModalBottomSheet<void>(
+    context: context,
+    isScrollControlled: true,
+    backgroundColor: Colors.transparent,
+    builder: (_) => const _AboutSheet(),
+  );
+}
+
+class _AboutSheet extends StatelessWidget {
+  const _AboutSheet();
+
+  Future<void> _open(BuildContext context, Uri uri) async {
+    final opened = await launchUrl(
+      uri,
+      mode: LaunchMode.externalApplication,
+    );
+    if (!opened && context.mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Não foi possível abrir este endereço.')),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return SafeArea(
+      top: false,
+      child: Material(
+        color: Colors.white,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+        clipBehavior: Clip.antiAlias,
+        child: SingleChildScrollView(
+          padding: const EdgeInsets.fromLTRB(24, 12, 24, 24),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: isWindowsDesktop ? 0 : 38,
+                  height: isWindowsDesktop ? 0 : 4,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFDCE2EC),
+                    borderRadius: BorderRadius.circular(4),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              const Text('Sobre o PassDrive', style: AppTypography.sectionTitle),
+              const SizedBox(height: 8),
+              Text(
+                'Versão 1.0.1',
+                style: AppTypography.secondary.copyWith(
+                  color: AppColors.navy,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
+              const SizedBox(height: 10),
+              const Text(
+                'Um cofre local criptografado para organizar e proteger suas credenciais.',
+                style: AppTypography.secondary,
+              ),
+              const SizedBox(height: 18),
+              _AboutLink(
+                icon: Icons.mail_outline_rounded,
+                title: 'Contato',
+                detail: 'contato@passdrive.online',
+                onTap: () => _open(
+                  context,
+                  Uri(scheme: 'mailto', path: 'contato@passdrive.online'),
+                ),
+              ),
+              _AboutLink(
+                icon: Icons.language_rounded,
+                title: 'Site',
+                detail: 'passdrive.online',
+                onTap: () => _open(context, Uri.parse('https://passdrive.online')),
+              ),
+              _AboutLink(
+                icon: Icons.privacy_tip_outlined,
+                title: 'Política de privacidade',
+                onTap: () => _open(
+                  context,
+                  Uri.parse('https://passdrive.online/privacy.html'),
+                ),
+              ),
+              _AboutLink(
+                icon: Icons.description_outlined,
+                title: 'Termos de uso',
+                onTap: () => _open(
+                  context,
+                  Uri.parse('https://passdrive.online/terms.html'),
+                ),
+              ),
+              _AboutLink(
+                icon: Icons.code_rounded,
+                title: 'Código-fonte',
+                detail: 'GitHub',
+                onTap: () => _open(
+                  context,
+                  Uri.parse('https://github.com/matheusventurasantos/passdrive'),
+                ),
+              ),
+              const SizedBox(height: 18),
+              OutlinedButton(
+                onPressed: () => Navigator.of(context).pop(),
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: AppColors.blue,
+                  padding: const EdgeInsets.symmetric(vertical: 14),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(14),
+                  ),
+                  side: const BorderSide(color: Color(0xFFD6E0F2)),
+                ),
+                child: const Text('Fechar'),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _AboutLink extends StatelessWidget {
+  const _AboutLink({
+    required this.icon,
+    required this.title,
+    required this.onTap,
+    this.detail,
+  });
+
+  final IconData icon;
+  final String title;
+  final String? detail;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(12),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 10),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: AppColors.paleBlueStrong,
+                borderRadius: BorderRadius.circular(11),
+              ),
+              child: Icon(icon, color: AppColors.blue, size: 21),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: AppTypography.itemTitle),
+                  if (detail != null) ...[
+                    const SizedBox(height: 3),
+                    Text(detail!, style: AppTypography.secondary),
+                  ],
+                ],
+              ),
+            ),
+            const Icon(
+              Icons.open_in_new_rounded,
+              color: Color(0xFF8993A8),
+              size: 18,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 }
 
