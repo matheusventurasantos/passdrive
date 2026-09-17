@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val signingProperties = Properties()
+val signingPropertiesFile = rootProject.file("key.properties")
+if (signingPropertiesFile.exists()) {
+    signingPropertiesFile.inputStream().use { signingProperties.load(it) }
+}
+
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -5,7 +13,15 @@ plugins {
 }
 
 android {
-    namespace = "com.example.passdrive"
+    signingConfigs {
+        create("releaseUpload") {
+            keyAlias = signingProperties.getProperty("keyAlias")
+            keyPassword = signingProperties.getProperty("keyPassword")
+            storeFile = signingProperties.getProperty("storeFile")?.let { file(it) }
+            storePassword = signingProperties.getProperty("storePassword")
+        }
+    }
+    namespace = "com.passdrive.app"
     compileSdk = flutter.compileSdkVersion
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
@@ -14,7 +30,7 @@ android {
 
     defaultConfig {
         // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "com.example.passdrive"
+        applicationId = "com.passdrive.app"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -31,7 +47,7 @@ android {
         release {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
-            signingConfig = signingConfigs.getByName("debug")
+            signingConfig = if (signingPropertiesFile.exists()) signingConfigs.getByName("releaseUpload") else signingConfigs.getByName("debug")
         }
     }
 }

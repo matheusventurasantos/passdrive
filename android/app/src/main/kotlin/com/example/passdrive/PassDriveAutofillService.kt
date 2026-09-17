@@ -1,4 +1,4 @@
-package com.example.passdrive
+package com.passdrive.app
 
 import android.app.assist.AssistStructure
 import android.app.assist.AssistStructure.ViewNode
@@ -224,7 +224,7 @@ class PassDriveAutofillService : AutofillService() {
     }
 
     private fun presentation(label: String): RemoteViews = RemoteViews(
-        "com.example.passdrive",
+        "com.passdrive.app",
         R.layout.autofill_suggestion,
     ).apply {
         setTextViewText(R.id.autofill_label, label)
@@ -503,7 +503,7 @@ class PassDriveAutofillService : AutofillService() {
     )
 
     companion object {
-        private const val ACTION_AUTOFILL = "com.example.passdrive.AUTOFILL"
+        private const val ACTION_AUTOFILL = "com.passdrive.app.AUTOFILL"
         private const val EXTRA_REQUEST_ID = "passdrive_autofill_request"
         private const val EXTRA_PACKAGE = "passdrive_autofill_package"
         private const val EXTRA_DOMAIN = "passdrive_autofill_domain"
@@ -703,7 +703,7 @@ class PassDriveAutofillService : AutofillService() {
         }
 
         private fun presentationFor(label: String): RemoteViews = RemoteViews(
-            "com.example.passdrive",
+            "com.passdrive.app",
             R.layout.autofill_suggestion,
         ).apply {
             setTextViewText(R.id.autofill_label, label)
@@ -751,7 +751,7 @@ class PassDriveAutofillService : AutofillService() {
                 context,
                 label.hashCode(),
                 android.content.Intent(context, MainActivity::class.java).apply {
-                    action = "com.example.passdrive.AUTOFILL_ATTRIBUTION"
+                    action = "com.passdrive.app.AUTOFILL_ATTRIBUTION"
                     addFlags(android.content.Intent.FLAG_ACTIVITY_NEW_TASK)
                 },
                 PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,

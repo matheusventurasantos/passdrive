@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'windows/desktop_window_frame.dart';
 import 'windows/desktop_layout.dart';
 import 'vault/vault_gate_page.dart';
-import 'windows/desktop_client_page.dart';
+import 'windows/desktop_update_page.dart';
 import 'autofill/autofill_bridge.dart';
 
 void main() {
@@ -21,7 +21,7 @@ class PassDriveApp extends StatelessWidget {
   Widget build(BuildContext context) {
     final content =
         home ??
-        (isWindowsDesktop ? const DesktopClientPage() : const VaultGatePage());
+        (isWindowsDesktop ? const DesktopUpdatePage() : const VaultGatePage());
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       title: 'PassDrive',

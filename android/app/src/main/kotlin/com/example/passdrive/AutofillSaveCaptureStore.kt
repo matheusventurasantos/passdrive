@@ -1,4 +1,4 @@
-package com.example.passdrive
+package com.passdrive.app
 
 import android.content.Context
 import android.security.keystore.KeyGenParameterSpec
