@@ -233,7 +233,7 @@ class _AboutSheet extends StatelessWidget {
               Text(tr('Sobre o PassDrive'), style: AppTypography.sectionTitle),
               const SizedBox(height: 8),
               Text(
-                tr('Versão 1.0.1'),
+                tr('Versão 1.0.2'),
                 style: AppTypography.secondary.copyWith(
                   color: AppColors.navy,
                   fontWeight: FontWeight.w600,

@@ -4,15 +4,21 @@ import android.app.Activity
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.Manifest
-import android.hardware.biometrics.BiometricPrompt
 import android.os.Build
-import android.os.CancellationSignal
 import android.provider.Settings
 import android.security.keystore.KeyGenParameterSpec
 import android.security.keystore.KeyProperties
 import android.util.Base64
 import android.view.WindowManager
-import io.flutter.embedding.android.FlutterActivity
+import androidx.biometric.BiometricManager
+import androidx.biometric.BiometricPrompt
+import com.google.android.play.core.appupdate.AppUpdateManager
+import com.google.android.play.core.appupdate.AppUpdateManagerFactory
+import com.google.android.play.core.install.InstallStateUpdatedListener
+import com.google.android.play.core.install.model.AppUpdateType
+import com.google.android.play.core.install.model.InstallStatus
+import com.google.android.play.core.install.model.UpdateAvailability
+import io.flutter.embedding.android.FlutterFragmentActivity
 import io.flutter.embedding.engine.FlutterEngine
 import io.flutter.plugin.common.MethodChannel
 import java.security.KeyStore
@@ -21,7 +27,7 @@ import javax.crypto.KeyGenerator
 import javax.crypto.SecretKey
 import javax.crypto.spec.GCMParameterSpec
 
-class MainActivity : FlutterActivity() {
+class MainActivity : FlutterFragmentActivity() {
     private var syncChannel: MethodChannel? = null
     private var autofillChannel: MethodChannel? = null
     private var autofillReady = false
@@ -31,6 +37,17 @@ class MainActivity : FlutterActivity() {
     private val syncPrefs by lazy { getSharedPreferences("passdrive_sync", MODE_PRIVATE) }
     private var pendingSyncDevice: String? = null
     private var discoveryLock: android.net.wifi.WifiManager.MulticastLock? = null
+    private var updateChannel: MethodChannel? = null
+    private lateinit var updateManager: AppUpdateManager
+    private var updateListenerRegistered = false
+    private val updateRequestCode = 6203
+    private val updateListener = InstallStateUpdatedListener { state ->
+        when (state.installStatus()) {
+            InstallStatus.DOWNLOADED -> updateChannel?.invokeMethod("downloaded", null)
+            InstallStatus.FAILED, InstallStatus.CANCELED ->
+                updateChannel?.invokeMethod("failed", null)
+        }
+    }
 
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
@@ -53,6 +70,14 @@ class MainActivity : FlutterActivity() {
             pendingSaveCaptureId = PassDriveAutofillService.pendingSaveCaptureId(applicationContext)
         }
         dispatchAutofillSaveRequest()
+    }
+
+    override fun onDestroy() {
+        if (updateListenerRegistered) {
+            updateManager.unregisterListener(updateListener)
+            updateListenerRegistered = false
+        }
+        super.onDestroy()
     }
 
     private fun startDiscovery(): Boolean {
@@ -78,7 +103,7 @@ class MainActivity : FlutterActivity() {
     private var pending: MethodChannel.Result? = null
     private var output: ByteArray? = null
     private var pendingMaxBytes = 16384
-    private var cancellation: CancellationSignal? = null
+    private var biometricPrompt: BiometricPrompt? = null
 
     override fun configureFlutterEngine(flutterEngine: FlutterEngine) {
         super.configureFlutterEngine(flutterEngine)
@@ -87,6 +112,30 @@ class MainActivity : FlutterActivity() {
         pendingAutofill = PassDriveAutofillService.activityPayload(intent)
         pendingSaveCaptureId =
             PassDriveAutofillService.pendingSaveCaptureId(applicationContext)
+        updateManager = AppUpdateManagerFactory.create(this)
+        updateChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "passdrive/update").also { channel ->
+            channel.setMethodCallHandler { call, result ->
+                try {
+                    when (call.method) {
+                        "check" -> checkForPlayUpdate(result)
+                        "start" -> startPlayUpdate(
+                            call.argument<String>("mode") == "immediate",
+                            result,
+                        )
+                        "complete" -> {
+                            updateManager.completeUpdate()
+                                .addOnSuccessListener { result.success(true) }
+                                .addOnFailureListener { result.success(false) }
+                        }
+                        else -> result.notImplemented()
+                    }
+                } catch (e: Exception) {
+                    // Sideloaded/debug builds and devices without Play Store are
+                    // deliberately treated as having no update available.
+                    result.success(mapOf("available" to false))
+                }
+            }
+        }
         syncChannel = MethodChannel(flutterEngine.dartExecutor.binaryMessenger, "passdrive/sync").also { channel ->
             channel.setMethodCallHandler { call, result ->
                 try {
@@ -241,7 +290,12 @@ class MainActivity : FlutterActivity() {
                             }
                             result.success(null)
                         }
-                        "enable", "unlock" -> biometric(call.method == "enable", call.argument<ByteArray>("key"), result)
+                        "enable", "unlock" -> biometric(
+                            call.method == "enable",
+                            call.argument<ByteArray>("key"),
+                            call.argument<String>("language") == "en",
+                            result,
+                        )
                         "save" -> {
                             output = call.argument<ByteArray>("bytes") ?: error("Arquivo vazio")
                             pending = result
@@ -279,6 +333,50 @@ class MainActivity : FlutterActivity() {
         autofillChannel?.invokeMethod("request", payload)
     }
 
+    private fun checkForPlayUpdate(result: MethodChannel.Result) {
+        updateManager.appUpdateInfo
+            .addOnSuccessListener { info ->
+                val available = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                val resumingImmediate =
+                    info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+                val immediate = (available || resumingImmediate) &&
+                    info.updatePriority() >= 4 &&
+                    info.isUpdateTypeAllowed(AppUpdateType.IMMEDIATE)
+                val flexible = available && info.isUpdateTypeAllowed(AppUpdateType.FLEXIBLE)
+                result.success(
+                    mapOf(
+                        "available" to available,
+                        "immediate" to immediate,
+                        "flexible" to flexible,
+                        "resumeImmediate" to resumingImmediate,
+                    ),
+                )
+            }
+            .addOnFailureListener { result.success(mapOf("available" to false)) }
+    }
+
+    private fun startPlayUpdate(immediate: Boolean, result: MethodChannel.Result) {
+        updateManager.appUpdateInfo
+            .addOnSuccessListener { info ->
+                val type = if (immediate) AppUpdateType.IMMEDIATE else AppUpdateType.FLEXIBLE
+                val resumable = immediate &&
+                    info.updateAvailability() == UpdateAvailability.DEVELOPER_TRIGGERED_UPDATE_IN_PROGRESS
+                val available = info.updateAvailability() == UpdateAvailability.UPDATE_AVAILABLE
+                if ((!available && !resumable) || !info.isUpdateTypeAllowed(type)) {
+                    result.success(false)
+                    return@addOnSuccessListener
+                }
+                if (!immediate && !updateListenerRegistered) {
+                    updateManager.registerListener(updateListener)
+                    updateListenerRegistered = true
+                }
+                @Suppress("DEPRECATION")
+                updateManager.startUpdateFlowForResult(info, type, this, updateRequestCode)
+                result.success(true)
+            }
+            .addOnFailureListener { result.success(false) }
+    }
+
     private fun dispatchAutofillSaveRequest() {
         val id = pendingSaveCaptureId ?: return
         if (!autofillReady) return
@@ -301,13 +399,29 @@ class MainActivity : FlutterActivity() {
         store().deleteEntry(alias)
     }
 
-    private fun biometric(enroll: Boolean, bytes: ByteArray?, result: MethodChannel.Result) {
-        if (Build.VERSION.SDK_INT < 28) {
-            result.error("unavailable", "Use a senha ou o arquivo neste aparelho.", null)
+    private fun biometric(
+        enroll: Boolean,
+        bytes: ByteArray?,
+        english: Boolean,
+        result: MethodChannel.Result,
+    ) {
+        fun text(portuguese: String, translated: String) = if (english) translated else portuguese
+        val authenticators = BiometricManager.Authenticators.BIOMETRIC_STRONG
+        if (BiometricManager.from(this).canAuthenticate(authenticators) !=
+            BiometricManager.BIOMETRIC_SUCCESS) {
+            bytes?.fill(0)
+            result.error(
+                "unavailable",
+                text(
+                    "Configure uma biometria forte nas configurações do aparelho.",
+                    "Set up strong biometrics in your device settings.",
+                ),
+                null,
+            )
             return
         }
         if (enroll && bytes?.size != 32) {
-            result.error("invalid_key", "Chave inválida.", null)
+            result.error("invalid_key", text("Chave inválida.", "Invalid key."), null)
             return
         }
         val cipher = Cipher.getInstance("AES/GCM/NoPadding")
@@ -331,31 +445,25 @@ class MainActivity : FlutterActivity() {
         } catch (e: Exception) {
             clearBiometric()
             bytes?.fill(0)
-            result.error("unavailable", "Ative a biometria novamente usando sua senha ou arquivo.", null)
+            result.error(
+                "unavailable",
+                text(
+                    "Ative a biometria novamente usando sua senha ou arquivo.",
+                    "Enable biometrics again using your password or file.",
+                ),
+                null,
+            )
             return
         }
         pending = result
-        val signal = CancellationSignal()
-        cancellation = signal
-        val prompt = BiometricPrompt.Builder(this)
-            .setTitle(if (enroll) "Ativar biometria" else "Desbloquear PassDrive")
-            .setSubtitle("Confirme sua identidade para acessar o cofre")
-            .setNegativeButton("Usar senha ou arquivo", mainExecutor) { _, _ ->
-                val reply = pending
-                pending = null
-                cancellation?.cancel()
-                cancellation = null
-                bytes?.fill(0)
-                if (enroll) clearBiometric()
-                reply?.error("cancelled", "Use a senha ou o arquivo para entrar.", null)
-            }
-            .build()
-        prompt.authenticate(BiometricPrompt.CryptoObject(cipher), signal, mainExecutor,
+        biometricPrompt = BiometricPrompt(
+            this,
+            mainExecutor,
             object : BiometricPrompt.AuthenticationCallback() {
                 override fun onAuthenticationSucceeded(authentication: BiometricPrompt.AuthenticationResult) {
                     val reply = pending ?: return
                     pending = null
-                    cancellation = null
+                    biometricPrompt = null
                     try {
                         val authorizedCipher = authentication.cryptoObject?.cipher ?: error("Missing cipher")
                         if (enroll) {
@@ -370,27 +478,59 @@ class MainActivity : FlutterActivity() {
                         }
                     } catch (e: Exception) {
                         clearBiometric()
-                        reply.error("unavailable", "Use a senha ou o arquivo para entrar.", null)
+                        reply.error(
+                            "unavailable",
+                            text(
+                                "Use a senha ou o arquivo para entrar.",
+                                "Use your password or file to sign in.",
+                            ),
+                            null,
+                        )
                     } finally { bytes?.fill(0) }
                 }
 
                 override fun onAuthenticationError(code: Int, message: CharSequence) {
                     val reply = pending ?: return
                     pending = null
-                    cancellation = null
+                    biometricPrompt = null
                     bytes?.fill(0)
                     if (enroll) clearBiometric()
-                    val cancelled = code == BiometricPrompt.BIOMETRIC_ERROR_CANCELED ||
-                        code == BiometricPrompt.BIOMETRIC_ERROR_USER_CANCELED
+                    val cancelled = code == BiometricPrompt.ERROR_CANCELED ||
+                        code == BiometricPrompt.ERROR_USER_CANCELED ||
+                        code == BiometricPrompt.ERROR_NEGATIVE_BUTTON
                     reply.error(if (cancelled) "cancelled" else "biometric_failed",
-                        if (cancelled) "Use a senha ou o arquivo para entrar." else message.toString(), null)
+                        if (cancelled) text(
+                            "Use a senha ou o arquivo para entrar.",
+                            "Use your password or file to sign in.",
+                        ) else message.toString(), null)
                 }
-            })
+            },
+        )
+        val promptInfo = BiometricPrompt.PromptInfo.Builder()
+            .setTitle(
+                if (enroll) text("Ativar biometria", "Enable biometrics")
+                else text("Desbloquear PassDrive", "Unlock PassDrive"),
+            )
+            .setSubtitle(text(
+                "Confirme sua identidade para acessar o cofre",
+                "Confirm your identity to access the vault",
+            ))
+            .setNegativeButtonText(text("Usar senha ou arquivo", "Use password or file"))
+            .setAllowedAuthenticators(authenticators)
+            .build()
+        biometricPrompt?.authenticate(promptInfo, BiometricPrompt.CryptoObject(cipher))
     }
 
     @Deprecated("Used by Flutter activity result dispatch")
     override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
         super.onActivityResult(requestCode, resultCode, data)
+        if (requestCode == updateRequestCode) {
+            updateChannel?.invokeMethod(
+                "immediateResult",
+                mapOf("accepted" to (resultCode == Activity.RESULT_OK)),
+            )
+            return
+        }
         if (requestCode != 4101 && requestCode != 4102) return
         val reply = pending ?: return
         pending = null

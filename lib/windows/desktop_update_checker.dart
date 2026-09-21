@@ -23,7 +23,7 @@ class DesktopUpdateInfo {
 class DesktopUpdateChecker {
   const DesktopUpdateChecker({
     this.repository = 'matheusventurasantos/passdrive',
-    this.currentVersion = '1.0.1',
+    this.currentVersion = '1.0.2',
   });
 
   static const _apiBase = 'https://api.github.com/repos';

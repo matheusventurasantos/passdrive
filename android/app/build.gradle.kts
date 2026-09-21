@@ -57,6 +57,11 @@ dependencies {
     // raw Slice manually can result in an empty/white suggestion on Samsung
     // Keyboard and other IMEs.
     implementation("androidx.autofill:autofill:1.1.0")
+    // AndroidX normalizes biometric prompts across current Android devices.
+    implementation("androidx.biometric:biometric:1.1.0")
+    // Google Play-managed updates. The store remains the only source of APKs.
+    implementation("com.google.android.play:app-update:2.1.0")
+    implementation("com.google.android.play:app-update-ktx:2.1.0")
 }
 
 kotlin {

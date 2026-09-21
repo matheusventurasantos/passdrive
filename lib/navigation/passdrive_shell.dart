@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart' hide showModalBottomSheet;
@@ -24,6 +26,7 @@ import '../sync/sync_devices_sheet.dart';
 import '../sync/sync_protocol.dart';
 import '../sync/sync_store.dart';
 import '../autofill/autofill_bridge.dart';
+import '../updates/mobile_update.dart';
 
 class PassDriveShell extends StatefulWidget {
   const PassDriveShell({this.vault, this.pendingAutofillSave, super.key});
@@ -49,6 +52,7 @@ class _PassDriveShellState extends State<PassDriveShell>
   MobileSync? _sync;
   final _passwordsKey = GlobalKey<PasswordsPageState>();
   bool _syncMenuOpen = false;
+  bool _updateDialogOpen = false;
   AutofillSaveCandidate? _pendingAutofillSave;
 
   void _openSync() async {
@@ -102,20 +106,23 @@ class _PassDriveShellState extends State<PassDriveShell>
     _syncMenuOpen = true;
     try {
       final label = switch (action.kind) {
-        RemoteActionKind.addAccount => 'Adicionar conta',
-        RemoteActionKind.addService => 'Adicionar serviço',
-        RemoteActionKind.editAccount => 'Editar conta',
-        RemoteActionKind.editService => 'Editar serviço',
-        RemoteActionKind.deleteAccount => 'Excluir conta',
-        RemoteActionKind.deleteService => 'Excluir serviço',
-        RemoteActionKind.favoriteAccount => 'Alterar favorito da conta',
-        RemoteActionKind.favoriteService => 'Alterar favorito do serviço',
+        RemoteActionKind.addAccount => tr('Adicionar conta'),
+        RemoteActionKind.addService => tr('Adicionar serviço'),
+        RemoteActionKind.editAccount => tr('Editar conta'),
+        RemoteActionKind.editService => tr('Editar serviço'),
+        RemoteActionKind.deleteAccount => tr('Excluir conta'),
+        RemoteActionKind.deleteService => tr('Excluir serviço'),
+        RemoteActionKind.favoriteAccount => tr('Alterar favorito da conta'),
+        RemoteActionKind.favoriteService => tr('Alterar favorito do serviço'),
       };
       if (!await syncConfirm(
         context,
         label,
-        '$computer solicitou esta ação. Continue aqui no celular para autorizar.',
-        confirm: 'Continuar no celular',
+        tx(
+          '$computer solicitou esta ação. Continue aqui no celular para autorizar.',
+          '$computer requested this action. Continue on your phone to authorize it.',
+        ),
+        confirm: tr('Continuar no celular'),
       )) {
         return false;
       }
@@ -152,18 +159,10 @@ class _PassDriveShellState extends State<PassDriveShell>
       );
     }
     if (widget.vault == null) return;
-    // `inactive` is recorded but is treated as a confirmed overlay only when
-    // capture is disabled. It also occurs during short system interactions
-    // while the activity is still visible, including the Android screenshot
-    // flow. `hidden`/`paused` confirm that the surface left the foreground.
-    // When capture is disabled there is no screenshot exception to preserve,
-    // so a sustained inactive overlay also starts the configured lock.
-    if (state == AppLifecycleState.inactive &&
-        widget.vault?.allowScreenCapture != true &&
-        !VaultAccess.busy &&
-        !_isRecentMetricsChange) {
-      _scheduleLock(startedAt: transition.awaySince);
-    }
+    // Android reports `inactive` for transient system UI, including the
+    // biometric prompt, screenshots and permission sheets. It does not mean
+    // that the protected surface has actually left the foreground, therefore
+    // it must never start the lock countdown by itself.
     if ((state == AppLifecycleState.hidden ||
             state == AppLifecycleState.paused) &&
         !VaultAccess.busy &&
@@ -271,7 +270,7 @@ class _PassDriveShellState extends State<PassDriveShell>
     showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.resolve(Colors.white),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -300,7 +299,7 @@ class _PassDriveShellState extends State<PassDriveShell>
     await showModalBottomSheet<void>(
       context: context,
       isScrollControlled: true,
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.resolve(Colors.white),
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
       ),
@@ -337,8 +336,8 @@ class _PassDriveShellState extends State<PassDriveShell>
           SnackBar(
             content: Text(
               saved
-                  ? 'Chave-mestra salva no local escolhido.'
-                  : 'Download cancelado. Você pode tentar novamente.',
+                  ? tr('Chave-mestra salva no local escolhido.')
+                  : tr('Download cancelado. Você pode tentar novamente.'),
               style: const TextStyle(fontFamily: 'Kumbh Sans'),
             ),
             duration: const Duration(milliseconds: 1800),
@@ -357,7 +356,7 @@ class _PassDriveShellState extends State<PassDriveShell>
     final vault = widget.vault;
     if (vault == null) return null;
     final saved = await vault.exportBackup();
-    return saved ? 'Backup criptografado salvo no local escolhido.' : null;
+    return saved ? tr('Backup criptografado salvo no local escolhido.') : null;
   }
 
   Future<String?> _restoreBackup() async {
@@ -367,7 +366,7 @@ class _PassDriveShellState extends State<PassDriveShell>
     if (bytes == null) return null;
     await vault.restoreBackup(bytes);
     if (mounted) setState(() {});
-    return 'Backup restaurado com sucesso.';
+    return tr('Backup restaurado com sucesso.');
   }
 
   late final PageController _pageController;
@@ -379,6 +378,7 @@ class _PassDriveShellState extends State<PassDriveShell>
     super.initState();
     AutofillBridge.pending.addListener(_fillPendingAutofill);
     AutofillBridge.pendingSaveCaptureId.addListener(_receiveAutofillSave);
+    MobileUpdate.events.addListener(_onMobileUpdateEvent);
     _pendingAutofillSave = widget.pendingAutofillSave;
     WidgetsBinding.instance.addObserver(this);
     _pageController = PageController();
@@ -422,12 +422,18 @@ class _PassDriveShellState extends State<PassDriveShell>
         ).catchError((_) {});
       }
     });
+    // Runs only after this unlocked shell is visible. It never competes with
+    // master-password entry or the biometric prompt on the gate screen.
+    WidgetsBinding.instance.addPostFrameCallback(
+      (_) => _checkForMobileUpdate(),
+    );
   }
 
   @override
   void dispose() {
     AutofillBridge.pending.removeListener(_fillPendingAutofill);
     AutofillBridge.pendingSaveCaptureId.removeListener(_receiveAutofillSave);
+    MobileUpdate.events.removeListener(_onMobileUpdateEvent);
     WidgetsBinding.instance.removeObserver(this);
     _lockTimer?.cancel();
     _pageController.dispose();
@@ -448,6 +454,112 @@ class _PassDriveShellState extends State<PassDriveShell>
     final vault = widget.vault;
     if (vault == null || AutofillBridge.pending.value == null) return;
     unawaited(AutofillBridge.fillFromSnapshot(vault.snapshot));
+  }
+
+  Future<void> _checkForMobileUpdate() async {
+    if (!mounted || isWindowsDesktop || _locking || _updateDialogOpen) return;
+    final offer = await MobileUpdate.check();
+    if (!mounted || offer == null || !offer.available || !offer.canStart) {
+      return;
+    }
+    await _showUpdateOffer(offer);
+  }
+
+  void _onMobileUpdateEvent() {
+    final event = MobileUpdate.events.value;
+    if (!mounted || event == null || _updateDialogOpen) return;
+    if (event == MobileUpdateEvent.downloaded) {
+      unawaited(_showDownloadedUpdate());
+    } else if (event == MobileUpdateEvent.failed) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(tr('Não foi possível baixar a atualização.'))),
+      );
+    }
+  }
+
+  Future<void> _showUpdateOffer(MobileUpdateOffer offer) async {
+    if (!mounted || _updateDialogOpen) return;
+    _updateDialogOpen = true;
+    final critical = offer.immediate || offer.resumeImmediate;
+    try {
+      final update = await showDialog<bool>(
+        context: context,
+        barrierDismissible: !critical,
+        builder: (context) => AlertDialog(
+          title: Text(
+            critical
+                ? tr('Atualização de segurança disponível')
+                : tr('Atualização disponível'),
+          ),
+          content: Text(
+            critical
+                ? tr(
+                    'Uma atualização importante de segurança precisa ser instalada para continuar usando o PassDrive.',
+                  )
+                : tr(
+                    'Uma nova versão do PassDrive está disponível. Ela será baixada enquanto você continua usando o app.',
+                  ),
+          ),
+          actions: [
+            if (!critical)
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: Text(tr('Depois')),
+              ),
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(
+                critical ? tr('Atualizar agora') : tr('Baixar atualização'),
+              ),
+            ),
+          ],
+        ),
+      );
+      if (update != true || !mounted) return;
+      final started = await MobileUpdate.start(immediate: critical);
+      if (!mounted) return;
+      if (started && !critical) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(tr('Baixando atualização em segundo plano…'))),
+        );
+      } else if (!started) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(tr('Não foi possível iniciar a atualização.')),
+          ),
+        );
+      }
+    } finally {
+      _updateDialogOpen = false;
+    }
+  }
+
+  Future<void> _showDownloadedUpdate() async {
+    if (!mounted || _updateDialogOpen) return;
+    _updateDialogOpen = true;
+    try {
+      final install = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (context) => AlertDialog(
+          title: Text(tr('Atualização pronta')),
+          content: Text(
+            tr(
+              'A atualização foi baixada. Reinicie o app para concluir a instalação.',
+            ),
+          ),
+          actions: [
+            FilledButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: Text(tr('Reiniciar e instalar')),
+            ),
+          ],
+        ),
+      );
+      if (install == true) await MobileUpdate.complete();
+    } finally {
+      _updateDialogOpen = false;
+    }
   }
 
   void _receiveAutofillSave() {
@@ -488,10 +600,11 @@ class _PassDriveShellState extends State<PassDriveShell>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (_locking) {
-      return const Scaffold(
-        backgroundColor: Colors.white,
-        body: Center(
+      return Scaffold(
+        backgroundColor: AppPalette.canvas,
+        body: const Center(
           child: Icon(Icons.lock_outline, color: Color(0xFF4862E0), size: 34),
         ),
       );
@@ -576,7 +689,7 @@ class _PassDriveShellState extends State<PassDriveShell>
       );
     }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.canvas,
       body: pages,
       bottomNavigationBar: SafeArea(
         top: false,
@@ -600,18 +713,21 @@ class _ShellBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 78,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F3F8))),
+      decoration: BoxDecoration(
+        color: AppPalette.resolve(Colors.white),
+        border: Border(
+          top: BorderSide(color: AppPalette.resolve(const Color(0xFFF1F3F8))),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
             child: _ShellNavigationItem(
               icon: Icons.home_outlined,
-              label: 'Início',
+              label: tr('Início'),
               selected: selectedIndex == 0,
               onTap: () => onSelected(0),
             ),
@@ -619,7 +735,7 @@ class _ShellBottomNavigation extends StatelessWidget {
           Expanded(
             child: _ShellNavigationItem(
               icon: Icons.lock_outline,
-              label: 'Senhas',
+              label: tr('Senhas'),
               selected: selectedIndex == 1,
               onTap: () => onSelected(1),
             ),
@@ -627,7 +743,7 @@ class _ShellBottomNavigation extends StatelessWidget {
           Expanded(
             child: _ShellNavigationItem(
               icon: Icons.key_outlined,
-              label: 'Gerador',
+              label: tr('Gerador'),
               selected: selectedIndex == 2,
               onTap: () => onSelected(2),
             ),
@@ -635,7 +751,7 @@ class _ShellBottomNavigation extends StatelessWidget {
           Expanded(
             child: _ShellNavigationItem(
               icon: Icons.settings_outlined,
-              label: 'Ajustes',
+              label: tr('Ajustes'),
               selected: selectedIndex == 3,
               onTap: () => onSelected(3),
             ),
@@ -661,7 +777,10 @@ class _ShellNavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF347BFF) : const Color(0xFF9AA3B5);
+    Theme.of(context);
+    final color = selected
+        ? AppPalette.resolve(const Color(0xFF347BFF))
+        : AppPalette.resolve(const Color(0xFF9AA3B5));
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

@@ -467,7 +467,7 @@ Ver senhas|View passwords
 Verificado há 2 min|Checked 2 min ago
 Verificando a rede local…|Checking the local network…
 Verificando senhas comprometidas...|Checking for compromised passwords...
-Versão 1.0.1|Version 1.0.1
+Versão 1.0.2|Version 1.0.2
 Versão do banco de dados inválida.|Invalid database version.
 Versão do cofre não suportada.|Unsupported vault version.
 Versão, política e informações do app|Version, policies and app information
