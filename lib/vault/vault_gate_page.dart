@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart';
@@ -22,27 +24,50 @@ class VaultGatePage extends StatefulWidget {
   State<VaultGatePage> createState() => _VaultGatePageState();
 }
 
-class _VaultGatePageState extends State<VaultGatePage> {
+class _VaultGatePageState extends State<VaultGatePage>
+    with WidgetsBindingObserver {
   final _passwordController = TextEditingController();
   bool? _hasVault;
   bool _loadFailed = false;
   bool _isSubmitting = false;
   bool _passwordVisible = false;
   bool _biometricEnabled = false;
+  bool _autoBiometricPending = false;
   String? _errorText;
   final _passwordThrottle = MasterPasswordAttemptThrottle();
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _loadVaultState();
   }
 
   @override
   void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
     unawaited(AutofillBridge.cancel());
     _passwordController.dispose();
     super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _tryAutoBiometric());
+    }
+  }
+
+  void _tryAutoBiometric() {
+    if (!mounted ||
+        !_autoBiometricPending ||
+        _isSubmitting ||
+        WidgetsBinding.instance.lifecycleState != AppLifecycleState.resumed ||
+        ModalRoute.of(context)?.isCurrent != true) {
+      return;
+    }
+    _autoBiometricPending = false;
+    unawaited(_submit(method: 'biometric'));
   }
 
   Future<void> _loadVaultState() async {
@@ -63,17 +88,16 @@ class _VaultGatePageState extends State<VaultGatePage> {
           _biometricEnabled = enabled;
           _loadFailed = false;
         });
-        if (enabled) {
-          WidgetsBinding.instance.addPostFrameCallback((_) {
-            if (mounted) _submit(method: 'biometric');
-          });
-        }
+        _autoBiometricPending = enabled;
+        WidgetsBinding.instance.addPostFrameCallback(
+          (_) => _tryAutoBiometric(),
+        );
       }
     } on Object {
       if (mounted) {
         setState(() {
           _loadFailed = true;
-          _errorText = 'Não foi possível abrir o cofre local.';
+          _errorText = tr('Não foi possível abrir o cofre local.');
         });
       }
     }
@@ -82,13 +106,14 @@ class _VaultGatePageState extends State<VaultGatePage> {
   Future<void> _submit({String method = 'password'}) async {
     final hasVault = _hasVault;
     if (hasVault != true || _isSubmitting) return;
+    _autoBiometricPending = false;
 
     final password = _passwordController.text;
     if (method == 'password' && password.length < 8) {
       setState(
         () => _errorText = password.isEmpty
-            ? 'Digite sua senha para continuar.'
-            : 'Sua senha precisa ter pelo menos 8 caracteres.',
+            ? tr('Digite sua senha para continuar.')
+            : tr('Sua senha precisa ter pelo menos 8 caracteres.'),
       );
       return;
     }
@@ -96,8 +121,9 @@ class _VaultGatePageState extends State<VaultGatePage> {
       if (!_passwordThrottle.loaded ||
           !_passwordThrottle.persistenceAvailable) {
         setState(
-          () => _errorText =
-              'Não foi possível validar as tentativas com segurança agora.',
+          () => _errorText = tr(
+            'Não foi possível validar as tentativas com segurança agora.',
+          ),
         );
         return;
       }
@@ -107,8 +133,10 @@ class _VaultGatePageState extends State<VaultGatePage> {
             remaining.inSeconds +
             (remaining.inMilliseconds % 1000 == 0 ? 0 : 1);
         setState(
-          () => _errorText =
-              'Aguarde $seconds segundo${seconds == 1 ? '' : 's'} antes de tentar novamente.',
+          () => _errorText = tx(
+            'Aguarde $seconds segundo${seconds == 1 ? '' : 's'} antes de tentar novamente.',
+            'Wait $seconds second${seconds == 1 ? '' : 's'} before trying again.',
+          ),
         );
         return;
       }
@@ -182,8 +210,9 @@ class _VaultGatePageState extends State<VaultGatePage> {
     } on FormatException {
       if (mounted) {
         setState(
-          () => _errorText =
-              'Este arquivo não é uma chave-mestra válida do PassDrive.',
+          () => _errorText = tr(
+            'Este arquivo não é uma chave-mestra válida do PassDrive.',
+          ),
         );
       }
     } on PlatformException catch (e) {
@@ -192,8 +221,10 @@ class _VaultGatePageState extends State<VaultGatePage> {
           () => _errorText = e.code == 'cancelled'
               ? null
               : method == 'biometric'
-              ? 'Biometria indisponível agora. Use sua senha ou chave-mestra.'
-              : 'Não conseguimos acessar o arquivo. Selecione-o novamente.',
+              ? tr(
+                  'Biometria indisponível agora. Use sua senha ou chave-mestra.',
+                )
+              : tr('Não conseguimos acessar o arquivo. Selecione-o novamente.'),
         );
       }
     } on VaultUnlockException {
@@ -204,8 +235,10 @@ class _VaultGatePageState extends State<VaultGatePage> {
               remaining.inSeconds +
               (remaining.inMilliseconds % 1000 == 0 ? 0 : 1);
           setState(
-            () => _errorText =
-                'A senha não desbloqueou seu cofre. Aguarde $seconds segundo${seconds == 1 ? '' : 's'} antes de tentar novamente.',
+            () => _errorText = tx(
+              'A senha não desbloqueou seu cofre. Aguarde $seconds segundo${seconds == 1 ? '' : 's'} antes de tentar novamente.',
+              'The password did not unlock your vault. Wait $seconds second${seconds == 1 ? '' : 's'} before trying again.',
+            ),
           );
           return;
         }
@@ -213,17 +246,24 @@ class _VaultGatePageState extends State<VaultGatePage> {
       if (mounted) {
         setState(
           () => _errorText = method == 'file'
-              ? 'Esta chave não abre seu cofre. Selecione o arquivo correspondente.'
+              ? tr(
+                  'Esta chave não abre seu cofre. Selecione o arquivo correspondente.',
+                )
               : method == 'biometric'
-              ? 'Entre com senha ou arquivo e ative a biometria novamente nos Ajustes.'
-              : 'A senha não desbloqueou seu cofre. Confira e tente novamente.',
+              ? tr(
+                  'Entre com senha ou arquivo e ative a biometria novamente nos Ajustes.',
+                )
+              : tr(
+                  'A senha não desbloqueou seu cofre. Confira e tente novamente.',
+                ),
         );
       }
     } on StateError {
       if (mounted) {
         setState(
-          () => _errorText =
-              'Não foi possível ler o cofre. Feche o app e tente novamente.',
+          () => _errorText = tr(
+            'Não foi possível ler o cofre. Feche o app e tente novamente.',
+          ),
         );
       }
     } on VaultStorageException catch (error) {
@@ -235,8 +275,8 @@ class _VaultGatePageState extends State<VaultGatePage> {
       if (mounted) {
         setState(
           () => _errorText = method == 'file'
-              ? 'Não foi possível concluir a leitura da chave-mestra.'
-              : 'Não foi possível acessar o cofre.',
+              ? tr('Não foi possível concluir a leitura da chave-mestra.')
+              : tr('Não foi possível acessar o cofre.'),
         );
       }
     } finally {
@@ -246,12 +286,13 @@ class _VaultGatePageState extends State<VaultGatePage> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final hasVault = _hasVault;
     if (hasVault == false) return const OnboardingPage();
     if (isWindowsDesktop) {
       return Scaffold(
         body: DesktopAuthLayout(
-          title: 'Abrir cofre',
+          title: tr('Abrir cofre'),
           illustration: SvgPicture.asset(
             'assets/illustrations/cofre.svg',
             width: 320,
@@ -262,8 +303,9 @@ class _VaultGatePageState extends State<VaultGatePage> {
                   children: [
                     if (_loadFailed) ...[
                       Text(
-                        _errorText ?? 'Não foi possível abrir o cofre local.',
-                        style: const TextStyle(
+                        _errorText ??
+                            tr('Não foi possível abrir o cofre local.'),
+                        style: TextStyle(
                           fontSize: 16,
                           height: 1.5,
                           color: desktopMuted,
@@ -273,7 +315,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                       FilledButton.tonalIcon(
                         onPressed: _loadVaultState,
                         icon: const Icon(Icons.refresh),
-                        label: const Text('Tentar novamente'),
+                        label: Text(tr('Tentar novamente')),
                       ),
                     ] else
                       const Center(child: CircularProgressIndicator()),
@@ -282,7 +324,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
               : Column(
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    const _VaultFieldLabel('Senha do aplicativo'),
+                    _VaultFieldLabel(tr('Senha do aplicativo')),
                     TextField(
                       controller: _passwordController,
                       enabled: !_isSubmitting,
@@ -297,16 +339,13 @@ class _VaultGatePageState extends State<VaultGatePage> {
                           setState(() => _errorText = null);
                         }
                       },
-                      style: const TextStyle(
-                        fontSize: 17,
-                        color: AppColors.navy,
-                      ),
+                      style: TextStyle(fontSize: 17, color: AppColors.navy),
                       decoration: _decoration(
-                        hintText: 'Digite sua senha',
+                        hintText: tr('Digite sua senha'),
                         suffix: IconButton(
                           tooltip: _passwordVisible
-                              ? 'Ocultar senha'
-                              : 'Mostrar senha',
+                              ? tr('Ocultar senha')
+                              : tr('Mostrar senha'),
                           onPressed: () => setState(
                             () => _passwordVisible = !_passwordVisible,
                           ),
@@ -344,16 +383,16 @@ class _VaultGatePageState extends State<VaultGatePage> {
                         ),
                       ),
                       child: _isSubmitting
-                          ? const SizedBox.square(
+                          ? SizedBox.square(
                               dimension: 22,
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
-                                color: Colors.white,
+                                color: AppPalette.resolve(Colors.white),
                               ),
                             )
-                          : const Text(
-                              'Entrar',
-                              style: TextStyle(
+                          : Text(
+                              tr('Entrar'),
+                              style: const TextStyle(
                                 fontSize: 17,
                                 fontWeight: FontWeight.w600,
                               ),
@@ -366,16 +405,16 @@ class _VaultGatePageState extends State<VaultGatePage> {
                             ? null
                             : () => _submit(method: 'biometric'),
                         icon: const Icon(Icons.fingerprint),
-                        label: const Text('Usar biometria'),
+                        label: Text(tr('Usar biometria')),
                       ),
                     TextButton.icon(
                       onPressed: _isSubmitting
                           ? null
                           : () => _submit(method: 'file'),
                       icon: const Icon(Icons.file_open_outlined),
-                      label: const Text(
-                        'Entrar com chave-mestra',
-                        style: TextStyle(fontSize: 16),
+                      label: Text(
+                        tr('Entrar com chave-mestra'),
+                        style: const TextStyle(fontSize: 16),
                       ),
                       style: TextButton.styleFrom(
                         padding: const EdgeInsets.symmetric(vertical: 18),
@@ -387,7 +426,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
       );
     }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.canvas,
       body: SafeArea(
         child: hasVault == null
             ? _loadFailed
@@ -397,7 +436,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                         child: FilledButton.tonalIcon(
                           onPressed: _loadVaultState,
                           icon: const Icon(Icons.refresh),
-                          label: const Text('Tentar novamente'),
+                          label: Text(tr('Tentar novamente')),
                         ),
                       ),
                     )
@@ -437,7 +476,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                         const SizedBox(height: 20),
                         const _VaultMark(),
                         const SizedBox(height: 24),
-                        const _VaultFieldLabel('Senha do aplicativo'),
+                        _VaultFieldLabel(tr('Senha do aplicativo')),
                         TextField(
                           enabled: !_isSubmitting,
                           autocorrect: false,
@@ -453,7 +492,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                           onSubmitted: (_) => _submit(),
                           style: AppTypography.itemTitle,
                           decoration: _decoration(
-                            hintText: 'Digite sua senha',
+                            hintText: tr('Digite sua senha'),
                             suffix: IconButton(
                               onPressed: () => setState(
                                 () => _passwordVisible = !_passwordVisible,
@@ -477,7 +516,9 @@ class _VaultGatePageState extends State<VaultGatePage> {
                                     child: Text(
                                       _errorText!,
                                       style: AppTypography.secondary.copyWith(
-                                        color: const Color(0xFFE65353),
+                                        color: AppPalette.resolve(
+                                          const Color(0xFFE65353),
+                                        ),
                                         height: 1.3,
                                       ),
                                     ),
@@ -490,23 +531,27 @@ class _VaultGatePageState extends State<VaultGatePage> {
                           child: FilledButton(
                             onPressed: _isSubmitting ? null : _submit,
                             style: FilledButton.styleFrom(
-                              backgroundColor: const Color(0xFF347BFF),
-                              disabledBackgroundColor: const Color(0xFFB9CCF7),
+                              backgroundColor: AppPalette.resolve(
+                                const Color(0xFF347BFF),
+                              ),
+                              disabledBackgroundColor: AppPalette.resolve(
+                                const Color(0xFFB9CCF7),
+                              ),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(14),
                               ),
                             ),
                             child: _isSubmitting
-                                ? const SizedBox(
+                                ? SizedBox(
                                     width: 22,
                                     height: 22,
                                     child: CircularProgressIndicator(
-                                      color: Colors.white,
+                                      color: AppPalette.resolve(Colors.white),
                                       strokeWidth: 2.5,
                                     ),
                                   )
-                                : const Text(
-                                    'Entrar',
+                                : Text(
+                                    tr('Entrar'),
                                     style: AppTypography.buttonLabel,
                                   ),
                           ),
@@ -518,7 +563,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                                 ? null
                                 : () => _submit(method: 'biometric'),
                             icon: const Icon(Icons.fingerprint),
-                            label: const Text('Usar biometria'),
+                            label: Text(tr('Usar biometria')),
                             style: OutlinedButton.styleFrom(
                               foregroundColor: AppColors.blue,
                               textStyle: AppTypography.itemTitle,
@@ -533,7 +578,7 @@ class _VaultGatePageState extends State<VaultGatePage> {
                               ? null
                               : () => _submit(method: 'file'),
                           icon: const Icon(Icons.file_open_outlined),
-                          label: const Text('Entrar com chave-mestra'),
+                          label: Text(tr('Entrar com chave-mestra')),
                           style: TextButton.styleFrom(
                             foregroundColor: AppColors.blue,
                             textStyle: AppTypography.itemTitle,
@@ -555,11 +600,13 @@ class _VaultGatePageState extends State<VaultGatePage> {
       hintStyle: AppTypography.secondary,
       suffixIcon: suffix,
       filled: true,
-      fillColor: const Color(0xFFF7F9FC),
+      fillColor: AppPalette.resolve(const Color(0xFFF7F9FC)),
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
-        borderSide: const BorderSide(color: Color(0xFFE1E6F0)),
+        borderSide: BorderSide(
+          color: AppPalette.resolve(const Color(0xFFE1E6F0)),
+        ),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(14),
@@ -574,6 +621,7 @@ class _VaultMark extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Center(
       child: SvgPicture.asset(
         'assets/illustrations/cofre.svg',
@@ -590,6 +638,7 @@ class _VaultFieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 2, bottom: 8),
       child: Text(text, style: AppTypography.itemTitle.copyWith(fontSize: 15)),

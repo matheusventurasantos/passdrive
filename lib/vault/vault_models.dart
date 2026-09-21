@@ -1,4 +1,5 @@
 import 'dart:convert';
+import '../settings/app_strings.dart';
 
 enum VaultItemType { account, service }
 
@@ -353,13 +354,13 @@ class VaultSnapshot {
   static Map<String, Object?> migrateJson(Map<String, Object?> json) {
     final version = json['formatVersion'];
     if (version != null && version is! int) {
-      throw const VaultSnapshotFormatException('A versão do cofre é inválida.');
+      throw VaultSnapshotFormatException(tr('A versão do cofre é inválida.'));
     }
     if (version is int && version > formatVersion) {
       throw VaultSnapshotUnsupportedVersionException(version);
     }
     if (version is int && version < 1) {
-      throw const VaultSnapshotFormatException('A versão do cofre é inválida.');
+      throw VaultSnapshotFormatException(tr('A versão do cofre é inválida.'));
     }
 
     var currentVersion = version is int ? version : 1;
@@ -378,9 +379,7 @@ class VaultSnapshot {
         migrated['breachChecks'] ??= <String, Object?>{};
         currentVersion = 5;
       } else {
-        throw const VaultSnapshotFormatException(
-          'A versão do cofre é inválida.',
-        );
+        throw VaultSnapshotFormatException(tr('A versão do cofre é inválida.'));
       }
     }
     migrated['formatVersion'] = currentVersion;
@@ -394,15 +393,15 @@ class VaultSnapshot {
     final ids = <String>{};
     for (final account in accounts) {
       if (account.id.trim().isEmpty || !ids.add(account.id)) {
-        throw const VaultSnapshotFormatException(
-          'O cofre possui identificadores inválidos ou duplicados.',
+        throw VaultSnapshotFormatException(
+          tr('O cofre possui identificadores inválidos ou duplicados.'),
         );
       }
     }
     for (final service in services) {
       if (service.id.trim().isEmpty || !ids.add(service.id)) {
-        throw const VaultSnapshotFormatException(
-          'O cofre possui identificadores inválidos ou duplicados.',
+        throw VaultSnapshotFormatException(
+          tr('O cofre possui identificadores inválidos ou duplicados.'),
         );
       }
     }
@@ -411,8 +410,8 @@ class VaultSnapshot {
   static Map<String, VaultBreachCheck> _readBreachChecks(Object? value) {
     if (value == null) return const {};
     if (value is! Map || value.length > 10000) {
-      throw const VaultSnapshotFormatException(
-        'A verificação de segurança do cofre é inválida.',
+      throw VaultSnapshotFormatException(
+        tr('A verificação de segurança do cofre é inválida.'),
       );
     }
     final checks = <String, VaultBreachCheck>{};
@@ -421,8 +420,8 @@ class VaultSnapshot {
           (entry.key as String).trim().isEmpty ||
           (entry.key as String).length > 160 ||
           entry.value is! Map) {
-        throw const VaultSnapshotFormatException(
-          'A verificação de segurança do cofre é inválida.',
+        throw VaultSnapshotFormatException(
+          tr('A verificação de segurança do cofre é inválida.'),
         );
       }
       checks[entry.key as String] = VaultBreachCheck.fromJson(
@@ -488,7 +487,7 @@ String _optionalUrl(Map<String, Object?> json, String field) {
       uri == null ||
       uri.host.isEmpty ||
       uri.host.contains(' ')) {
-    throw const VaultSnapshotFormatException('A URL do cofre é inválida.');
+    throw VaultSnapshotFormatException(tr('A URL do cofre é inválida.'));
   }
   return value;
 }

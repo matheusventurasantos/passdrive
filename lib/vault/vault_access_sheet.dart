@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../theme/app_colors.dart';
@@ -68,7 +70,7 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
       }
     } on Object {
       if (mounted) {
-        setState(() => _message = 'Biometria indisponível neste aparelho.');
+        setState(() => _message = tr('Biometria indisponível neste aparelho.'));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -87,14 +89,16 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
       if (mounted) {
         setState(
           () => _message = e.code == 'cancelled'
-              ? 'Operação cancelada. Sua senha continua funcionando.'
-              : 'Não foi possível concluir. Confira a biometria do aparelho ou tente novamente.',
+              ? tr('Operação cancelada. Sua senha continua funcionando.')
+              : tr(
+                  'Não foi possível concluir. Confira a biometria do aparelho ou tente novamente.',
+                ),
         );
       }
     } on Object {
       if (mounted) {
         setState(
-          () => _message = 'Não foi possível concluir. Tente novamente.',
+          () => _message = tr('Não foi possível concluir. Tente novamente.'),
         );
       }
     } finally {
@@ -104,11 +108,12 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bottomInset = MediaQuery.viewInsetsOf(context).bottom;
     return SafeArea(
       top: false,
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         clipBehavior: Clip.antiAlias,
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         child: SingleChildScrollView(
@@ -123,22 +128,22 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
                   width: 38,
                   height: 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCE2EC),
+                    color: AppPalette.resolve(const Color(0xFFDCE2EC)),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text('Acesso ao cofre', style: AppTypography.sectionTitle),
+              Text(tr('Acesso ao cofre'), style: AppTypography.sectionTitle),
               const SizedBox(height: 20),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Entrar com biometria',
+                title: Text(
+                  tr('Entrar com biometria'),
                   style: AppTypography.itemTitle,
                 ),
-                subtitle: const Text(
-                  'Sua senha e chave-mestra continuam disponíveis.',
+                subtitle: Text(
+                  tr('Sua senha e chave-mestra continuam disponíveis.'),
                   style: AppTypography.secondary,
                 ),
                 value: _enabled,
@@ -157,12 +162,14 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
               const SizedBox(height: 20),
               SwitchListTile.adaptive(
                 contentPadding: EdgeInsets.zero,
-                title: const Text(
-                  'Preenchimento automático',
+                title: Text(
+                  tr('Preenchimento automático'),
                   style: AppTypography.itemTitle,
                 ),
-                subtitle: const Text(
-                  'Use as credenciais do PassDrive em sites e aplicativos. No Chrome, selecione “Autofill usando outro serviço”.',
+                subtitle: Text(
+                  tr(
+                    'Use as credenciais do PassDrive em sites e aplicativos. No Chrome, selecione “Autofill usando outro serviço”.',
+                  ),
                   style: AppTypography.secondary,
                 ),
                 value: _autofillEnabled,
@@ -182,7 +189,7 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
                       },
               ),
               const SizedBox(height: 20),
-              const Text('Bloqueio automático', style: AppTypography.itemTitle),
+              Text(tr('Bloqueio automático'), style: AppTypography.itemTitle),
               const SizedBox(height: 10),
               VaultAutoLockPicker(
                 value: _autoLock,
@@ -198,26 +205,30 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
                       },
               ),
               const SizedBox(height: 8),
-              const Text(
-                'O cofre será bloqueado depois que o app ficar inativo.',
+              Text(
+                tr('O cofre será bloqueado depois que o app ficar inativo.'),
                 style: AppTypography.secondary,
               ),
               const SizedBox(height: 20),
-              const Text('Chave-mestra', style: AppTypography.itemTitle),
+              Text('Chave-mestra', style: AppTypography.itemTitle),
               const SizedBox(height: 10),
-              const Text(
-                'Este arquivo abre seu cofre sem a senha. Guarde-o em um local seguro e não compartilhe. Ele não contém um backup das suas senhas.',
+              Text(
+                tr(
+                  'Este arquivo abre seu cofre sem a senha. Guarde-o em um local seguro e não compartilhe. Ele não contém um backup das suas senhas.',
+                ),
                 style: AppTypography.secondary,
               ),
               const SizedBox(height: 16),
               OutlinedButton.icon(
                 onPressed: _busy ? null : widget.onChangeMasterPassword,
                 icon: const Icon(Icons.password_outlined),
-                label: const Text('Alterar senha mestra'),
+                label: Text(tr('Alterar senha mestra')),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.blue,
                   padding: const EdgeInsets.symmetric(vertical: 14),
-                  side: const BorderSide(color: Color(0xFFD6DAE7)),
+                  side: BorderSide(
+                    color: AppPalette.resolve(const Color(0xFFD6DAE7)),
+                  ),
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(14),
                   ),
@@ -231,7 +242,7 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
                   padding: const EdgeInsets.symmetric(vertical: 16),
                 ),
                 icon: const Icon(Icons.download_rounded),
-                label: const Text('Baixar chave-mestra'),
+                label: Text(tr('Baixar chave-mestra')),
               ),
               if (_busy)
                 const Padding(
@@ -250,7 +261,7 @@ class _VaultAccessSheetState extends State<VaultAccessSheet>
               TextButton.icon(
                 onPressed: _busy ? null : widget.onLock,
                 icon: const Icon(Icons.lock_outline),
-                label: const Text('Bloquear cofre'),
+                label: Text(tr('Bloquear cofre')),
               ),
             ],
           ),
@@ -272,14 +283,17 @@ class VaultAutoLockPicker extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Semantics(
-      label: 'Tempo do bloqueio automático',
-      value: value.label,
+      label: tr('Tempo do bloqueio automático'),
+      value: tr(value.label),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFFF7F9FC),
+          color: AppPalette.resolve(const Color(0xFFF7F9FC)),
           borderRadius: BorderRadius.circular(14),
-          border: Border.all(color: const Color(0xFFE1E6F0)),
+          border: Border.all(
+            color: AppPalette.resolve(const Color(0xFFE1E6F0)),
+          ),
         ),
         child: DropdownButtonHideUnderline(
           child: DropdownButton<VaultAutoLock>(
@@ -290,7 +304,7 @@ class VaultAutoLockPicker extends StatelessWidget {
             style: AppTypography.itemTitle,
             items: [
               for (final option in VaultAutoLock.values)
-                DropdownMenuItem(value: option, child: Text(option.label)),
+                DropdownMenuItem(value: option, child: Text(tr(option.label))),
             ],
             onChanged: (next) {
               if (next != null) onChanged?.call(next);

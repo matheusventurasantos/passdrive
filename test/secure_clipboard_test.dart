@@ -49,13 +49,16 @@ void main() {
     expect(clipboard, 'texto novo');
   });
 
-  test('mantém a cópia durante a janela de colagem após perder o foco', () async {
-    await SecureClipboard.copy('segredo');
-    SecureClipboard.scheduleClearAfterFocusLoss();
-    await Future<void>.delayed(const Duration(milliseconds: 20));
+  test(
+    'mantém a cópia durante a janela de colagem após perder o foco',
+    () async {
+      await SecureClipboard.copy('segredo');
+      SecureClipboard.scheduleClearAfterFocusLoss();
+      await Future<void>.delayed(const Duration(milliseconds: 20));
 
-    expect(clipboard, 'segredo');
-  });
+      expect(clipboard, 'segredo');
+    },
+  );
 
   test(
     'mantém a cópia quando a limpeza automática estiver desativada',

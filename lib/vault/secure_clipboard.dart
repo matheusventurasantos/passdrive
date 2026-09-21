@@ -1,3 +1,4 @@
+import '../settings/app_strings.dart';
 import 'dart:async';
 
 import 'package:flutter/foundation.dart';
@@ -34,10 +35,13 @@ abstract final class SecureClipboard {
 
   static String get clearAfterMessage {
     final duration = _defaultClearAfter;
-    if (duration == null) return 'Não será limpa automaticamente.';
-    if (duration.inSeconds == 30) return 'Limpa em 30 segundos.';
-    if (duration.inMinutes == 1) return 'Limpa em 1 minuto.';
-    return 'Limpa em ${duration.inMinutes} minutos.';
+    if (duration == null) return tr('Não será limpa automaticamente.');
+    if (duration.inSeconds == 30) return tr('Limpa em 30 segundos.');
+    if (duration.inMinutes == 1) return tr('Limpa em 1 minuto.');
+    return tx(
+      'Limpa em ${duration.inMinutes} minutos.',
+      'Clears in ${duration.inMinutes} minutes.',
+    );
   }
 
   static void configure(Duration? clearAfter) {

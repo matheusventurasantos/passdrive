@@ -1,3 +1,4 @@
+import '../settings/app_strings.dart';
 import 'dart:convert';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -89,7 +90,7 @@ class MasterPasswordAttemptThrottle {
   }
 
   Future<Duration> registerFailure() async {
-    if (!_loaded) throw StateError('Limitador ainda não foi carregado.');
+    if (!_loaded) throw StateError(tr('Limitador ainda não foi carregado.'));
     if (!_persistenceAvailable) return remaining;
     if (_failures < _backoff.length) _failures++;
     _lockedUntil = _now().add(_backoff[_failures - 1]);

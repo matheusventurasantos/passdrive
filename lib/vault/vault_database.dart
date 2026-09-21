@@ -1,3 +1,4 @@
+import '../settings/app_strings.dart';
 import 'package:flutter/foundation.dart';
 import 'package:path/path.dart' as path;
 import 'package:path_provider/path_provider.dart';
@@ -14,7 +15,7 @@ class VaultDatabase {
   static Future<Database> open() async {
     if (defaultTargetPlatform == TargetPlatform.windows) {
       throw UnsupportedError(
-        'O Windows acessa apenas o cofre autorizado pelo celular.',
+        tr('O Windows acessa apenas o cofre autorizado pelo celular.'),
       );
     }
     final directory = await getApplicationDocumentsDirectory();
@@ -57,7 +58,7 @@ class VaultDatabase {
     int newVersion,
   ) async {
     if (oldVersion < 1 || oldVersion > newVersion) {
-      throw StateError('Versão do banco de dados inválida.');
+      throw StateError(tr('Versão do banco de dados inválida.'));
     }
     for (var current = oldVersion; current < newVersion; current++) {
       switch (current) {
@@ -82,7 +83,7 @@ class VaultDatabase {
           .whereType<String>()
           .toSet();
       if (!names.contains('id') || !names.contains('value')) {
-        throw StateError('Estrutura do cofre inválida.');
+        throw StateError(tr('Estrutura do cofre inválida.'));
       }
     }
   }

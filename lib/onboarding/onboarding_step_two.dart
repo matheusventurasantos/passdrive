@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import '../windows/desktop_layout.dart';
 import '../generator/password_generator_page.dart' show PasswordStrengthBar;
@@ -76,16 +78,19 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
     final confirmation = _confirmationController.text;
 
     _passwordError = password.isEmpty
-        ? 'Digite a senha do aplicativo.'
+        ? tr('Digite a senha do aplicativo.')
         : password.length < MasterPasswordPolicy.minimumLength
-        ? 'Use pelo menos ${MasterPasswordPolicy.minimumLength} caracteres.'
+        ? tx(
+            'Use pelo menos ${MasterPasswordPolicy.minimumLength} caracteres.',
+            'Use at least ${MasterPasswordPolicy.minimumLength} characters.',
+          )
         : MasterPasswordPolicy.errorFor(password);
     _confirmationError = confirmation.isEmpty
-        ? 'Confirme a senha do aplicativo.'
+        ? tr('Confirme a senha do aplicativo.')
         : password.isEmpty
         ? null
         : password != confirmation
-        ? 'As senhas são diferentes.'
+        ? tr('As senhas são diferentes.')
         : null;
 
     if (password.isEmpty && confirmation.isEmpty) {
@@ -120,9 +125,11 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
     } on Object {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
+          SnackBar(
             content: Text(
-              'Biometria não ativada. Você pode continuar com sua senha e tentar novamente.',
+              tr(
+                'Biometria não ativada. Você pode continuar com sua senha e tentar novamente.',
+              ),
             ),
           ),
         );
@@ -143,7 +150,7 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
     children: [
       Text(
         label,
-        style: const TextStyle(
+        style: TextStyle(
           fontSize: 16,
           fontWeight: FontWeight.w600,
           color: AppColors.navy,
@@ -156,21 +163,21 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
         autocorrect: false,
         enableSuggestions: false,
         onSubmitted: (_) => _handleContinue(),
-        style: const TextStyle(fontSize: 17, color: AppColors.navy),
+        style: TextStyle(fontSize: 17, color: AppColors.navy),
         decoration: InputDecoration(
           filled: true,
-          fillColor: const Color(0xFFF8FAFE),
+          fillColor: AppPalette.resolve(const Color(0xFFF8FAFE)),
           contentPadding: const EdgeInsets.all(18),
           border: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: desktopLine),
+            borderSide: BorderSide(color: desktopLine),
           ),
           enabledBorder: OutlineInputBorder(
             borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: desktopLine),
+            borderSide: BorderSide(color: desktopLine),
           ),
           suffixIcon: IconButton(
-            tooltip: visible ? 'Ocultar senha' : 'Mostrar senha',
+            tooltip: visible ? tr('Ocultar senha') : tr('Mostrar senha'),
             onPressed: onToggle,
             icon: Icon(
               visible
@@ -197,9 +204,10 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) {
       return DesktopAuthLayout(
-        title: 'Proteja suas senhas',
+        title: tr('Proteja suas senhas'),
         step: 2,
         illustration: const Icon(
           Icons.lock_person_outlined,
@@ -210,7 +218,7 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             _desktopPasswordField(
-              'Senha do aplicativo',
+              tr('Senha do aplicativo'),
               _passwordController,
               _showPassword,
               () => setState(() => _showPassword = !_showPassword),
@@ -220,7 +228,7 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
             PasswordStrengthBar(password: _passwordController.text),
             const SizedBox(height: 24),
             _desktopPasswordField(
-              'Confirmar senha',
+              tr('Confirmar senha'),
               _confirmationController,
               _showConfirmation,
               () => setState(() => _showConfirmation = !_showConfirmation),
@@ -229,8 +237,8 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
             const SizedBox(height: 24),
             SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              title: const Text(
-                'Desbloquear com biometria',
+              title: Text(
+                tr('Desbloquear com biometria'),
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.w600,
@@ -255,9 +263,12 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
                   borderRadius: BorderRadius.circular(14),
                 ),
               ),
-              child: const Text(
-                'Continuar',
-                style: TextStyle(fontSize: 17, fontWeight: FontWeight.w600),
+              child: Text(
+                tr('Continuar'),
+                style: const TextStyle(
+                  fontSize: 17,
+                  fontWeight: FontWeight.w600,
+                ),
               ),
             ),
           ],
@@ -269,7 +280,7 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
       child: OnboardingMobileLayout(
         step: 2,
         primaryAction: OnboardingButton(
-          label: 'Continuar',
+          label: tr('Continuar'),
           onPressed: _handleContinue,
           enabled:
               !_biometricsBusy &&
@@ -279,25 +290,27 @@ class _OnboardingStepTwoState extends State<OnboardingStepTwo> {
         content: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Proteja suas senhas',
+            Text(
+              tr('Proteja suas senhas'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 42,
+                fontSize: 30,
                 height: 1.05,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
-                letterSpacing: -1.4,
+                color: AppPalette.resolve(Colors.black),
+                letterSpacing: -0.8,
               ),
             ),
             const SizedBox(height: 10),
-            const Text(
-              'Crie uma senha forte e ative a biometria para mais segurança.',
+            Text(
+              tr(
+                'Crie uma senha forte e ative a biometria para mais segurança.',
+              ),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 20,
+                fontSize: 16,
                 height: 1.25,
                 fontWeight: FontWeight.w400,
                 color: AppColors.bodyText,
@@ -351,6 +364,7 @@ class _PasswordCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final password = passwordController.text;
     final confirmation = confirmationController.text;
     final matches = password.isNotEmpty && password == confirmation;
@@ -359,14 +373,14 @@ class _PasswordCard extends StatelessWidget {
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(24, 20, 24, 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         border: Border.all(color: AppColors.border),
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _FieldLabel(label: 'Senha do aplicativo'),
+          _FieldLabel(label: tr('Senha do aplicativo')),
           const SizedBox(height: 12),
           _PasswordInput(
             controller: passwordController,
@@ -377,7 +391,7 @@ class _PasswordCard extends StatelessWidget {
           const SizedBox(height: 4),
           _PasswordStrength(password: password),
           const SizedBox(height: 4),
-          const _FieldLabel(label: 'Confirmar senha'),
+          _FieldLabel(label: tr('Confirmar senha')),
           const SizedBox(height: 12),
           _PasswordInput(
             controller: confirmationController,
@@ -399,6 +413,7 @@ class _ValidationMessage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AnimatedSize(
       duration: const Duration(milliseconds: 220),
       curve: Curves.easeOutCubic,
@@ -410,7 +425,7 @@ class _ValidationMessage extends StatelessWidget {
               margin: const EdgeInsets.only(top: 8),
               padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
               decoration: BoxDecoration(
-                color: const Color(0xFFFFE9E9),
+                color: AppPalette.resolve(const Color(0xFFFFE9E9)),
                 borderRadius: BorderRadius.circular(8),
               ),
               child: Row(
@@ -447,14 +462,15 @@ class _FieldLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Text(
       label,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Kumbh Sans',
-        fontSize: 20,
+        fontSize: 16,
         height: 1.15,
         fontWeight: FontWeight.w500,
-        color: Colors.black,
+        color: AppPalette.resolve(Colors.black),
         letterSpacing: -0.7,
       ),
     );
@@ -476,15 +492,16 @@ class _PasswordInput extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return TextField(
       controller: controller,
       obscureText: obscureText,
       autocorrect: false,
       enableSuggestions: false,
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Kumbh Sans',
-        fontSize: 18,
-        color: Colors.black,
+        fontSize: 16,
+        color: AppPalette.resolve(Colors.black),
       ),
       decoration: InputDecoration(
         constraints: const BoxConstraints(minHeight: 52),
@@ -493,11 +510,11 @@ class _PasswordInput extends StatelessWidget {
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 0),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
-          borderSide: const BorderSide(color: AppColors.border),
+          borderSide: BorderSide(color: AppColors.border),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(10),
@@ -509,7 +526,7 @@ class _PasswordInput extends StatelessWidget {
             if (isValid)
               const Icon(Icons.check, color: AppColors.success, size: 23),
             IconButton(
-              tooltip: obscureText ? 'Mostrar senha' : 'Ocultar senha',
+              tooltip: obscureText ? tr('Mostrar senha') : tr('Ocultar senha'),
               onPressed: onToggleVisibility,
               icon: Icon(
                 obscureText
@@ -533,6 +550,7 @@ class _PasswordStrength extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final strength = _strengthFor(password);
 
     return SizedBox(
@@ -591,6 +609,7 @@ class _BiometricsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final compact =
@@ -599,7 +618,7 @@ class _BiometricsCard extends StatelessWidget {
         final icon = Container(
           width: 58,
           height: 58,
-          decoration: const BoxDecoration(
+          decoration: BoxDecoration(
             color: AppColors.paleBlueStrong,
             shape: BoxShape.circle,
           ),
@@ -609,27 +628,27 @@ class _BiometricsCard extends StatelessWidget {
           value: enabled,
           onChanged: onChanged,
           activeTrackColor: AppColors.blue,
-          activeThumbColor: Colors.white,
+          activeThumbColor: AppPalette.resolve(Colors.white),
         );
-        const details = Column(
+        final details = Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Desbloquear com biometria',
-              style: TextStyle(
+              tr('Desbloquear com biometria'),
+              style: const TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 18,
+                fontSize: 16,
                 height: 1.15,
                 fontWeight: FontWeight.w500,
                 color: Color(0xFF4D4D4D),
               ),
             ),
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'Use sua digital para abrir o app.',
+              tr('Use sua digital para abrir o app.'),
               style: TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 15,
+                fontSize: 14,
                 height: 1.2,
                 fontWeight: FontWeight.w400,
                 color: AppColors.bodyText,
@@ -641,7 +660,7 @@ class _BiometricsCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(20, 18, 14, 18),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppPalette.resolve(Colors.white),
             border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(20),
           ),
@@ -658,7 +677,7 @@ class _BiometricsCard extends StatelessWidget {
                   children: [
                     icon,
                     const SizedBox(width: 14),
-                    const Expanded(child: details),
+                    Expanded(child: details),
                     toggle,
                   ],
                 ),

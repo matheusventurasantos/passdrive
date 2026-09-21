@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
-import '../theme/app_typography.dart';
 
 class OnboardingButton extends StatelessWidget {
   const OnboardingButton({
@@ -19,13 +18,22 @@ class OnboardingButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       height: 62,
       width: double.infinity,
       child: ElevatedButton.icon(
         onPressed: enabled ? onPressed : null,
         icon: icon ?? const SizedBox.shrink(),
-        label: Text(label, style: AppTypography.button),
+        label: Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Kumbh Sans',
+            fontSize: 17,
+            height: 1,
+            fontWeight: FontWeight.w600,
+          ),
+        ),
         style: ElevatedButton.styleFrom(
           backgroundColor: AppColors.blue,
           foregroundColor: Colors.white,

@@ -62,6 +62,7 @@ class _OnboardingCanvasState extends State<OnboardingCanvas>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return FadeTransition(
       opacity: _opacity,
       child: SlideTransition(position: _slide, child: widget.child),
@@ -88,6 +89,7 @@ class OnboardingMobileLayout extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final sidePadding = constraints.maxWidth < 380 ? 22.0 : 35.0;

@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:async';
 
 import 'package:flutter/material.dart' hide showModalBottomSheet;
@@ -23,10 +25,10 @@ enum _PasswordSort { favoritesFirst, name, updated, created }
 
 String _passwordSortLabel(_PasswordSort sort) {
   return switch (sort) {
-    _PasswordSort.favoritesFirst => 'Favoritos primeiro',
-    _PasswordSort.name => 'Nome (A–Z)',
-    _PasswordSort.updated => 'Atualizados recentemente',
-    _PasswordSort.created => 'Criados recentemente',
+    _PasswordSort.favoritesFirst => tr('Favoritos primeiro'),
+    _PasswordSort.name => tr('Nome (A–Z)'),
+    _PasswordSort.updated => tr('Atualizados recentemente'),
+    _PasswordSort.created => tr('Criados recentemente'),
   };
 }
 
@@ -194,16 +196,18 @@ class PasswordsPageState extends State<PasswordsPage> {
     await _persistChanges();
     if (mounted) {
       final label = service.name.isEmpty
-          ? (domain ?? 'Credencial')
+          ? (domain ?? tr('Credencial'))
           : service.name;
       final messenger = ScaffoldMessenger.maybeOf(context);
       messenger
         ?..hideCurrentSnackBar()
         ..showSnackBar(
           SnackBar(
-            content: Text('$label adicionado ao cofre.'),
+            content: Text(
+              tx('$label adicionado ao cofre.', '$label added to the vault.'),
+            ),
             action: SnackBarAction(
-              label: 'Desfazer',
+              label: tr('Desfazer'),
               onPressed: () => unawaited(_undoAutofillSave(savedService.id)),
             ),
             duration: const Duration(seconds: 8),
@@ -322,7 +326,7 @@ class PasswordsPageState extends State<PasswordsPage> {
   }
 
   String get _organizationLabel {
-    if (_favoritesOnly) return 'Somente favoritos';
+    if (_favoritesOnly) return tr('Somente favoritos');
     return _passwordSortLabel(_sort);
   }
 
@@ -357,10 +361,10 @@ class PasswordsPageState extends State<PasswordsPage> {
   }
 
   String? get _healthFilterLabel => switch (_healthFilter) {
-    'weak' => 'Fracas',
-    'reused' => 'Reutilizadas',
-    'secure' => 'Seguras',
-    'compromised' => 'Comprometidas',
+    'weak' => tr('Fracas'),
+    'reused' => tr('Reutilizadas'),
+    'secure' => tr('Seguras'),
+    'compromised' => tr('Comprometidas'),
     _ => null,
   };
 
@@ -427,10 +431,10 @@ class PasswordsPageState extends State<PasswordsPage> {
     } on Object {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Não foi possível salvar as alterações.',
-            style: TextStyle(fontFamily: 'Kumbh Sans'),
+            tr('Não foi possível salvar as alterações.'),
+            style: const TextStyle(fontFamily: 'Kumbh Sans'),
           ),
         ),
       );
@@ -549,8 +553,8 @@ class PasswordsPageState extends State<PasswordsPage> {
     if (index < 0) return;
     if (action == _ServiceDetailsAction.delete) {
       final confirmed = await _confirmDeletion(
-        title: 'Excluir serviço?',
-        message: 'Essa credencial será removida do cofre.',
+        title: tr('Excluir serviço?'),
+        message: tr('Essa credencial será removida do cofre.'),
       );
       if (confirmed && mounted) {
         setState(() {
@@ -597,9 +601,9 @@ class PasswordsPageState extends State<PasswordsPage> {
     final action = await showModalBottomSheet<_ServiceDetailsAction>(
       context: context,
       backgroundColor: Colors.transparent,
-      builder: (_) => const _ItemActionsSheet(
-        editLabel: 'Editar conta',
-        deleteLabel: 'Excluir conta',
+      builder: (_) => _ItemActionsSheet(
+        editLabel: tr('Editar conta'),
+        deleteLabel: tr('Excluir conta'),
       ),
     );
     if (!mounted || action == null) return;
@@ -631,18 +635,19 @@ class PasswordsPageState extends State<PasswordsPage> {
         await showModalBottomSheet<void>(
           context: context,
           backgroundColor: Colors.transparent,
-          builder: (_) => const _BottomSheetNotice(
-            title: 'Excluir conta?',
-            message:
-                'Esta conta possui serviços vinculados. Remova ou transfira esses serviços antes de excluir.',
-            buttonLabel: 'Entendi',
+          builder: (_) => _BottomSheetNotice(
+            title: tr('Excluir conta?'),
+            message: tr(
+              'Esta conta possui serviços vinculados. Remova ou transfira esses serviços antes de excluir.',
+            ),
+            buttonLabel: tr('Entendi'),
           ),
         );
         return;
       }
       final confirmed = await _confirmDeletion(
-        title: 'Excluir conta?',
-        message: 'Essa conta será removida do cofre.',
+        title: tr('Excluir conta?'),
+        message: tr('Essa conta será removida do cofre.'),
       );
       if (confirmed && mounted) {
         setState(() {
@@ -850,11 +855,11 @@ class PasswordsPageState extends State<PasswordsPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DesktopHeading(
-            'Minhas senhas',
+            tr('Minhas senhas'),
             trailing: FilledButton.icon(
               onPressed: _openAddSelector,
               icon: const Icon(Icons.add_rounded),
-              label: const Text('Adicionar'),
+              label: Text(tr('Adicionar')),
               style: FilledButton.styleFrom(
                 backgroundColor: AppColors.blue,
                 padding: const EdgeInsets.symmetric(
@@ -891,10 +896,11 @@ class PasswordsPageState extends State<PasswordsPage> {
               padding: const EdgeInsets.only(top: 16),
               child: SecurityAlert(
                 icon: Icons.warning_amber_rounded,
-                color: const Color(0xFFDF820F),
-                title: 'Existem senhas fracas',
-                message:
-                    'Atualize suas senhas para proteger melhor suas contas.',
+                color: AppPalette.resolve(const Color(0xFFDF820F)),
+                title: tr('Existem senhas fracas'),
+                message: tr(
+                  'Atualize suas senhas para proteger melhor suas contas.',
+                ),
                 onClose: () => setState(() => _weakAlertDismissed = true),
                 onTap: () => _setHealthFilter('weak'),
               ),
@@ -904,10 +910,11 @@ class PasswordsPageState extends State<PasswordsPage> {
               padding: const EdgeInsets.only(top: 12),
               child: SecurityAlert(
                 icon: Icons.shield_outlined,
-                color: const Color(0xFFE65353),
-                title: 'Existem senhas comprometidas',
-                message:
-                    'Essas senhas apareceram em vazamentos conhecidos e devem ser alteradas.',
+                color: AppPalette.resolve(const Color(0xFFE65353)),
+                title: tr('Existem senhas comprometidas'),
+                message: tr(
+                  'Essas senhas apareceram em vazamentos conhecidos e devem ser alteradas.',
+                ),
                 onClose: () =>
                     setState(() => _compromisedAlertDismissed = true),
                 onTap: () => _setHealthFilter('compromised'),
@@ -921,9 +928,9 @@ class PasswordsPageState extends State<PasswordsPage> {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Contas',
+                        tr('Contas'),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -933,16 +940,16 @@ class PasswordsPageState extends State<PasswordsPage> {
                     ),
                     Text(
                       '${accounts.length}',
-                      style: const TextStyle(fontSize: 15, color: desktopMuted),
+                      style: TextStyle(fontSize: 15, color: desktopMuted),
                     ),
                   ],
                 ),
                 const SizedBox(height: 16),
                 if (accounts.isEmpty)
-                  const Padding(
-                    padding: EdgeInsets.symmetric(vertical: 22),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 22),
                     child: Text(
-                      'Nenhuma conta encontrada.',
+                      tr('Nenhuma conta encontrada.'),
                       style: TextStyle(fontSize: 14, color: desktopMuted),
                     ),
                   )
@@ -966,9 +973,9 @@ class PasswordsPageState extends State<PasswordsPage> {
               children: [
                 Row(
                   children: [
-                    const Expanded(
+                    Expanded(
                       child: Text(
-                        'Serviços',
+                        tr('Serviços'),
                         style: TextStyle(
                           fontSize: 20,
                           fontWeight: FontWeight.w700,
@@ -978,7 +985,7 @@ class PasswordsPageState extends State<PasswordsPage> {
                     ),
                     Text(
                       '${services.length}',
-                      style: const TextStyle(fontSize: 15, color: desktopMuted),
+                      style: TextStyle(fontSize: 15, color: desktopMuted),
                     ),
                   ],
                 ),
@@ -1012,6 +1019,7 @@ class PasswordsPageState extends State<PasswordsPage> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final accounts = _filteredAccounts;
     final services = _filteredServices;
     final accountMembership = List<_AccountData>.of(accounts)
@@ -1038,19 +1046,19 @@ class PasswordsPageState extends State<PasswordsPage> {
     }
 
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.canvas,
       floatingActionButton: Padding(
         padding: const EdgeInsets.only(right: 6),
         child: FloatingActionButton.extended(
           onPressed: _openAddSelector,
-          backgroundColor: const Color(0xFF347BFF),
+          backgroundColor: AppPalette.resolve(const Color(0xFF347BFF)),
           foregroundColor: Colors.white,
           elevation: 0,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
           icon: const Icon(Icons.add, size: 24),
-          label: const Text('Adicionar', style: AppTypography.buttonLabel),
+          label: Text(tr('Adicionar'), style: AppTypography.buttonLabel),
         ),
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
@@ -1113,10 +1121,11 @@ class PasswordsPageState extends State<PasswordsPage> {
                         const SizedBox(height: 12),
                         SecurityAlert(
                           icon: Icons.warning_amber_rounded,
-                          color: const Color(0xFFFF8A00),
-                          title: 'Existem senhas fracas',
-                          message:
-                              'Atualize suas senhas para proteger melhor suas contas.',
+                          color: AppPalette.resolve(const Color(0xFFFF8A00)),
+                          title: tr('Existem senhas fracas'),
+                          message: tr(
+                            'Atualize suas senhas para proteger melhor suas contas.',
+                          ),
                           onClose: () =>
                               setState(() => _weakAlertDismissed = true),
                           onTap: () => _setHealthFilter('weak'),
@@ -1128,10 +1137,11 @@ class PasswordsPageState extends State<PasswordsPage> {
                         const SizedBox(height: 10),
                         SecurityAlert(
                           icon: Icons.shield_outlined,
-                          color: const Color(0xFFFF5F59),
-                          title: 'Existem senhas comprometidas',
-                          message:
-                              'Essas senhas apareceram em vazamentos conhecidos e devem ser alteradas.',
+                          color: AppPalette.resolve(const Color(0xFFFF5F59)),
+                          title: tr('Existem senhas comprometidas'),
+                          message: tr(
+                            'Essas senhas apareceram em vazamentos conhecidos e devem ser alteradas.',
+                          ),
                           onClose: () =>
                               setState(() => _compromisedAlertDismissed = true),
                           onTap: () => _setHealthFilter('compromised'),
@@ -1140,7 +1150,7 @@ class PasswordsPageState extends State<PasswordsPage> {
                       const SizedBox(height: 18),
                     ],
                     _CollapsibleSectionHeader(
-                      title: 'Contas',
+                      title: tr('Contas'),
                       expanded: _accountsExpanded,
                       onTap: () => setState(
                         () => _accountsExpanded = !_accountsExpanded,
@@ -1180,7 +1190,7 @@ class PasswordsPageState extends State<PasswordsPage> {
                     ),
                     const SizedBox(height: 20),
                     _CollapsibleSectionHeader(
-                      title: 'Serviços',
+                      title: tr('Serviços'),
                       expanded: _servicesExpanded,
                       onTap: () => setState(
                         () => _servicesExpanded = !_servicesExpanded,
@@ -1294,10 +1304,11 @@ class _BottomSheetNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SafeArea(
       top: false,
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         clipBehavior: Clip.antiAlias,
         child: Padding(
@@ -1339,10 +1350,11 @@ class _BottomSheetConfirmation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SafeArea(
       top: false,
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         clipBehavior: Clip.antiAlias,
         child: Padding(
@@ -1365,12 +1377,14 @@ class _BottomSheetConfirmation extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFFD6DAE7)),
+                        side: BorderSide(
+                          color: AppPalette.resolve(const Color(0xFFD6DAE7)),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('Cancelar'),
+                      child: Text(tr('Cancelar')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -1378,13 +1392,15 @@ class _BottomSheetConfirmation extends StatelessWidget {
                     child: FilledButton(
                       onPressed: () => Navigator.of(context).pop(true),
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFE65353),
+                        backgroundColor: AppPalette.resolve(
+                          const Color(0xFFE65353),
+                        ),
                         padding: const EdgeInsets.symmetric(vertical: 14),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('Excluir'),
+                      child: Text(tr('Excluir')),
                     ),
                   ),
                 ],
@@ -1419,6 +1435,7 @@ class _OrganizationButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Align(
       alignment: Alignment.centerRight,
       child: Padding(
@@ -1428,7 +1445,7 @@ class _OrganizationButton extends StatelessWidget {
           child: TextButton.icon(
             onPressed: onTap,
             icon: const Icon(Icons.tune_rounded, size: 18),
-            label: const Text('Organizar'),
+            label: Text(tr('Organizar')),
             style: TextButton.styleFrom(
               foregroundColor: AppColors.blue,
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
@@ -1457,10 +1474,11 @@ class _OrganizationSheetState extends State<_OrganizationSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SafeArea(
       top: false,
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         clipBehavior: Clip.antiAlias,
         child: Padding(
@@ -1471,7 +1489,7 @@ class _OrganizationSheetState extends State<_OrganizationSheet> {
             children: [
               const _BottomSheetHandle(),
               const SizedBox(height: 18),
-              const Text('Organizar senhas', style: AppTypography.sectionTitle),
+              Text(tr('Organizar senhas'), style: AppTypography.sectionTitle),
               const SizedBox(height: 12),
               ..._PasswordSort.values.map(
                 (sort) => ListTile(
@@ -1482,7 +1500,7 @@ class _OrganizationSheetState extends State<_OrganizationSheet> {
                         : Icons.radio_button_unchecked_rounded,
                     color: sort == _sort
                         ? AppColors.blue
-                        : const Color(0xFF9AA4B7),
+                        : AppPalette.resolve(const Color(0xFF9AA4B7)),
                   ),
                   title: Text(_passwordSortLabel(sort)),
                   contentPadding: EdgeInsets.zero,
@@ -1491,7 +1509,7 @@ class _OrganizationSheetState extends State<_OrganizationSheet> {
               SwitchListTile(
                 value: _favoritesOnly,
                 onChanged: (value) => setState(() => _favoritesOnly = value),
-                title: const Text('Mostrar somente favoritos'),
+                title: Text(tr('Mostrar somente favoritos')),
                 contentPadding: EdgeInsets.zero,
                 activeThumbColor: AppColors.blue,
               ),
@@ -1510,7 +1528,7 @@ class _OrganizationSheetState extends State<_OrganizationSheet> {
                     borderRadius: BorderRadius.circular(14),
                   ),
                 ),
-                child: const Text('Aplicar'),
+                child: Text(tr('Aplicar')),
               ),
             ],
           ),
@@ -1525,12 +1543,13 @@ class _BottomSheetHandle extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Center(
       child: Container(
         width: isWindowsDesktop ? 0 : 38,
         height: isWindowsDesktop ? 0 : 4,
         decoration: BoxDecoration(
-          color: const Color(0xFFDCE2EC),
+          color: AppPalette.resolve(const Color(0xFFDCE2EC)),
           borderRadius: BorderRadius.circular(4),
         ),
       ),
@@ -1547,8 +1566,9 @@ class _AddChoiceSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Material(
-      color: Colors.white,
+      color: AppPalette.resolve(Colors.white),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -1563,29 +1583,30 @@ class _AddChoiceSheet extends StatelessWidget {
                   width: isWindowsDesktop ? 0 : 38,
                   height: isWindowsDesktop ? 0 : 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCE2EC),
+                    color: AppPalette.resolve(const Color(0xFFDCE2EC)),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
               const SizedBox(height: 18),
-              const Text(
-                'O que deseja adicionar?',
+              Text(
+                tr('O que deseja adicionar?'),
                 style: AppTypography.sectionTitle,
               ),
               const SizedBox(height: 10),
               _AddChoiceTile(
                 icon: Icons.alternate_email,
-                title: 'Adicionar conta',
-                description:
-                    'Cadastre um email principal para vincular serviços.',
+                title: tr('Adicionar conta'),
+                description: tr(
+                  'Cadastre um email principal para vincular serviços.',
+                ),
                 onTap: () => onChoice(_AddChoice.account),
               ),
               const SizedBox(height: 8),
               _AddChoiceTile(
                 icon: Icons.language_outlined,
-                title: 'Adicionar serviço',
-                description: 'Guarde o acesso de um site ou aplicativo.',
+                title: tr('Adicionar serviço'),
+                description: tr('Guarde o acesso de um site ou aplicativo.'),
                 onTap: () => onChoice(_AddChoice.service),
               ),
             ],
@@ -1611,8 +1632,9 @@ class _AddChoiceTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Material(
-      color: const Color(0xFFF7F9FE),
+      color: AppPalette.resolve(const Color(0xFFF7F9FE)),
       borderRadius: BorderRadius.circular(14),
       child: InkWell(
         borderRadius: BorderRadius.circular(14),
@@ -1625,10 +1647,14 @@ class _AddChoiceTile extends StatelessWidget {
                 width: 42,
                 height: 42,
                 decoration: BoxDecoration(
-                  color: const Color(0xFFE5EDFF),
+                  color: AppPalette.resolve(const Color(0xFFE5EDFF)),
                   borderRadius: BorderRadius.circular(12),
                 ),
-                child: Icon(icon, color: const Color(0xFF347BFF), size: 23),
+                child: Icon(
+                  icon,
+                  color: AppPalette.resolve(const Color(0xFF347BFF)),
+                  size: 23,
+                ),
               ),
               const SizedBox(width: 13),
               Expanded(
@@ -1827,7 +1853,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
   void _saveAccount() {
     final email = _emailController.text.trim();
     if (!_isValidEmail(email)) {
-      setState(() => _errorText = 'Digite um email válido.');
+      setState(() => _errorText = tr('Digite um email válido.'));
       return;
     }
     if (widget.accounts.any(
@@ -1835,7 +1861,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
           !identical(account, widget.initialAccount) &&
           account.email.toLowerCase() == email.toLowerCase(),
     )) {
-      setState(() => _errorText = 'Esta conta já está cadastrada.');
+      setState(() => _errorText = tr('Esta conta já está cadastrada.'));
       return;
     }
     Navigator.pop(
@@ -1856,13 +1882,15 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
     final email = _accountController.text.trim();
     if (email.isNotEmpty && !_isValidEmail(email)) {
       setState(
-        () => _accountError = 'Digite um email válido ou deixe em branco.',
+        () => _accountError = tr('Digite um email válido ou deixe em branco.'),
       );
       _accountFocus.requestFocus();
       return;
     }
     if (_passwordController.text.isEmpty) {
-      setState(() => _errorText = 'Digite uma senha ou gere uma senha forte.');
+      setState(
+        () => _errorText = tr('Digite uma senha ou gere uma senha forte.'),
+      );
       return;
     }
     await _swapContent(() {
@@ -1878,7 +1906,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
     final url = _urlController.text.trim();
     if (url.isNotEmpty && _siteHost(url) == null) {
       setState(
-        () => _urlError = 'Informe um endereço válido, como github.com.',
+        () => _urlError = tr('Informe um endereço válido, como github.com.'),
       );
       return;
     }
@@ -1887,7 +1915,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
         .replaceFirst(RegExp(r'^https?://'), '')
         .replaceFirst(RegExp(r'^www\.'), '')
         .split(RegExp(r'[/\s]'))
-        .firstWhere((value) => value.isNotEmpty, orElse: () => 'Serviço');
+        .firstWhere((value) => value.isNotEmpty, orElse: () => tr('Serviço'));
     Navigator.pop(
       context,
       _ServiceData(
@@ -1911,7 +1939,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
 
   List<_AccountData> get _matchingAccounts {
     final query = _accountController.text.trim().toLowerCase();
-    if (!_showAccounts) return const [];
+    if (!_showAccounts) return [];
     return widget.accounts
         .where((account) => account.email.toLowerCase().contains(query))
         .toList();
@@ -1919,6 +1947,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final height = MediaQuery.sizeOf(context).height;
     return SlideTransition(
       position: Tween<Offset>(begin: const Offset(0, 1), end: Offset.zero)
@@ -1929,7 +1958,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
             ),
           ),
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(22)),
         clipBehavior: Clip.antiAlias,
         child: SafeArea(
@@ -1945,11 +1974,11 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
                   _CreationHeader(
                     title: _mode == _CreationMode.account
                         ? widget.initialAccount == null
-                              ? 'Adicionar conta'
-                              : 'Editar conta'
+                              ? tr('Adicionar conta')
+                              : tr('Editar conta')
                         : widget.initialService == null
-                        ? 'Adicionar serviço'
-                        : 'Editar serviço',
+                        ? tr('Adicionar serviço')
+                        : tr('Editar serviço'),
                     onBack: _goBack,
                   ),
                 Flexible(
@@ -1995,7 +2024,9 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
                             ? _continueService
                             : _saveService,
                         style: FilledButton.styleFrom(
-                          backgroundColor: const Color(0xFF347BFF),
+                          backgroundColor: AppPalette.resolve(
+                            const Color(0xFF347BFF),
+                          ),
                           textStyle: AppTypography.buttonLabel,
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(14),
@@ -2004,13 +2035,13 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
                         child: Text(
                           _mode == _CreationMode.account
                               ? widget.initialAccount == null
-                                    ? 'Salvar conta'
-                                    : 'Salvar alterações'
+                                    ? tr('Salvar conta')
+                                    : tr('Salvar alterações')
                               : _serviceStep == 0
-                              ? 'Continuar'
+                              ? tr('Continuar')
                               : widget.initialService == null
-                              ? 'Salvar serviço'
-                              : 'Salvar alterações',
+                              ? tr('Salvar serviço')
+                              : tr('Salvar alterações'),
                         ),
                       ),
                     ),
@@ -2028,7 +2059,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _FormLabel('Email principal'),
+        _FormLabel(tr('Email principal')),
         _EntryField(
           controller: _emailController,
           hintText: 'voce@exemplo.com',
@@ -2042,7 +2073,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
               brand == _Brand.genericEmail
-                  ? 'Provedor não identificado'
+                  ? tr('Provedor não identificado')
                   : 'Provedor identificado: ${_providerName(brand)}',
               style: AppTypography.secondary.copyWith(
                 color: brand == _Brand.genericEmail
@@ -2052,17 +2083,17 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
             ),
           ),
         const SizedBox(height: 18),
-        const _FormLabel('Nome para organização (opcional)'),
+        _FormLabel(tr('Nome para organização (opcional)')),
         _EntryField(
           controller: _labelController,
-          hintText: 'Pessoal, trabalho ou faculdade',
+          hintText: tr('Pessoal, trabalho ou faculdade'),
           maxLength: 160,
         ),
         const SizedBox(height: 18),
-        const _FormLabel('Observação (opcional)'),
+        _FormLabel(tr('Observação (opcional)')),
         _EntryField(
           controller: _noteController,
-          hintText: 'Uma anotação curta',
+          hintText: tr('Uma anotação curta'),
           maxLines: 3,
           maxLength: 1000,
         ),
@@ -2075,10 +2106,10 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
       return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const _FormLabel('Nome do serviço (opcional)'),
+          _FormLabel(tr('Nome do serviço (opcional)')),
           _EntryField(
             controller: _serviceNameController,
-            hintText: 'GitHub, Netflix ou PayPal',
+            hintText: tr('GitHub, Netflix ou PayPal'),
             maxLength: 200,
             prefix: _BrandIcon(
               address: _urlController.text,
@@ -2088,7 +2119,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
             ),
           ),
           const SizedBox(height: 18),
-          const _FormLabel('URL ou domínio (opcional)'),
+          _FormLabel(tr('URL ou domínio (opcional)')),
           _EntryField(
             controller: _urlController,
             hintText: 'github.com',
@@ -2112,7 +2143,7 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
                 _urlController.clear();
                 _saveService();
               },
-              child: const Text('Pular esta etapa'),
+              child: Text(tr('Pular esta etapa')),
             ),
           ),
         ],
@@ -2123,19 +2154,19 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const _FormLabel('Usuário (opcional)'),
+        _FormLabel(tr('Usuário (opcional)')),
         _EntryField(
           controller: _usernameController,
-          hintText: 'Seu usuário no serviço',
+          hintText: tr('Seu usuário no serviço'),
           maxLength: 320,
         ),
         const SizedBox(height: 18),
-        const _FormLabel('Conta vinculada (opcional)'),
+        _FormLabel(tr('Conta vinculada (opcional)')),
         _EntryField(
           controller: _accountController,
           focusNode: _accountFocus,
           errorText: _accountError,
-          hintText: 'Digite ou selecione um email',
+          hintText: tr('Digite ou selecione um email'),
           keyboardType: TextInputType.emailAddress,
           maxLength: 320,
           prefix: _accountController.text.trim().isEmpty
@@ -2165,19 +2196,19 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
           Padding(
             padding: const EdgeInsets.only(top: 8, left: 4),
             child: Text(
-              'Este email será registrado como uma nova conta.',
+              tr('Este email será registrado como uma nova conta.'),
               style: AppTypography.secondary.copyWith(color: AppColors.success),
             ),
           ),
         const SizedBox(height: 18),
-        const _FormLabel('Senha'),
+        _FormLabel(tr('Senha')),
         Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Expanded(
               child: _EntryField(
                 controller: _passwordController,
-                hintText: 'Digite uma senha forte',
+                hintText: tr('Digite uma senha forte'),
                 obscureText: !_passwordVisible,
                 animatePassword: true,
                 errorText: _errorText,
@@ -2186,14 +2217,14 @@ class _AddCreationSheetState extends State<_AddCreationSheet>
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     IconButton(
-                      tooltip: 'Copiar senha',
+                      tooltip: tr('Copiar senha'),
                       onPressed: _copyPassword,
                       icon: const Icon(Icons.copy_outlined),
                     ),
                     IconButton(
                       tooltip: _passwordVisible
-                          ? 'Ocultar senha'
-                          : 'Mostrar senha',
+                          ? tr('Ocultar senha')
+                          : tr('Mostrar senha'),
                       onPressed: () =>
                           setState(() => _passwordVisible = !_passwordVisible),
                       icon: Icon(
@@ -2245,21 +2276,22 @@ class _CreationHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(12, 0, 24, 12),
         child: Row(
           children: [
             IconButton(
-              tooltip: 'Voltar',
+              tooltip: tr('Voltar'),
               onPressed: onBack,
-              icon: const Icon(Icons.arrow_back_rounded, color: AppColors.navy),
+              icon: Icon(Icons.arrow_back_rounded, color: AppColors.navy),
             ),
             const SizedBox(width: 8),
             Expanded(
               child: Text(
                 title,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 24,
                   height: 1.3,
                   fontWeight: FontWeight.w700,
@@ -2278,7 +2310,7 @@ class _CreationHeader extends StatelessWidget {
           width: isWindowsDesktop ? 0 : 38,
           height: isWindowsDesktop ? 0 : 4,
           decoration: BoxDecoration(
-            color: const Color(0xFFDCE2EC),
+            color: AppPalette.resolve(const Color(0xFFDCE2EC)),
             borderRadius: BorderRadius.circular(4),
           ),
         ),
@@ -2287,9 +2319,9 @@ class _CreationHeader extends StatelessWidget {
           child: Row(
             children: [
               IconButton(
-                tooltip: 'Voltar',
+                tooltip: tr('Voltar'),
                 onPressed: onBack,
-                icon: const Icon(Icons.arrow_back, color: AppColors.navy),
+                icon: Icon(Icons.arrow_back, color: AppColors.navy),
               ),
               Expanded(
                 child: Text(
@@ -2391,30 +2423,35 @@ class _EmbeddedPasswordGeneratorState
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       children: [
         Container(
           padding: const EdgeInsets.fromLTRB(14, 8, 4, 8),
           decoration: BoxDecoration(
-            color: const Color(0xFFF8F9FC),
-            border: Border.all(color: const Color(0xFFE1E6F0)),
+            color: AppPalette.resolve(const Color(0xFFF8F9FC)),
+            border: Border.all(
+              color: AppPalette.resolve(const Color(0xFFE1E6F0)),
+            ),
             borderRadius: BorderRadius.circular(13),
           ),
           child: Row(
             children: [
               Expanded(
                 child: _password.isEmpty
-                    ? const Text(
-                        'Ative pelo menos um tipo de caractere para gerar.',
+                    ? Text(
+                        tr('Ative pelo menos um tipo de caractere para gerar.'),
                         style: AppTypography.secondary,
                       )
                     : AnimatedPasswordText(
                         password: _password,
-                        backgroundColor: const Color(0xFFF8F9FC),
+                        backgroundColor: AppPalette.resolve(
+                          const Color(0xFFF8F9FC),
+                        ),
                       ),
               ),
               IconButton(
-                tooltip: 'Gerar outra senha',
+                tooltip: tr('Gerar outra senha'),
                 onPressed: _uppercase || _lowercase || _numbers || _symbols
                     ? _regenerate
                     : null,
@@ -2432,13 +2469,13 @@ class _EmbeddedPasswordGeneratorState
           child: FilledButton(
             onPressed: _password.isEmpty ? null : () => widget.onUse(_password),
             style: FilledButton.styleFrom(
-              backgroundColor: const Color(0xFF347BFF),
+              backgroundColor: AppPalette.resolve(const Color(0xFF347BFF)),
               textStyle: AppTypography.buttonLabel,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(13),
               ),
             ),
-            child: const Text('Usar esta senha'),
+            child: Text(tr('Usar esta senha')),
           ),
         ),
         const SizedBox(height: 12),
@@ -2476,6 +2513,7 @@ class _FormLabel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(left: 2, bottom: 8),
       child: Text(text, style: AppTypography.itemTitle),
@@ -2512,6 +2550,7 @@ class _EntryField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final field = TextField(
       controller: controller,
       focusNode: focusNode,
@@ -2541,18 +2580,22 @@ class _EntryField extends StatelessWidget {
         ),
         suffixIcon: suffix,
         filled: true,
-        fillColor: const Color(0xFFF8F9FC),
+        fillColor: AppPalette.resolve(const Color(0xFFF8F9FC)),
         contentPadding: const EdgeInsets.symmetric(
           horizontal: 14,
           vertical: 15,
         ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: Color(0xFFE1E6F0)),
+          borderSide: BorderSide(
+            color: AppPalette.resolve(const Color(0xFFE1E6F0)),
+          ),
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
-          borderSide: const BorderSide(color: Color(0xFFE1E6F0)),
+          borderSide: BorderSide(
+            color: AppPalette.resolve(const Color(0xFFE1E6F0)),
+          ),
         ),
         focusedBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(13),
@@ -2602,6 +2645,7 @@ class _AnimatedPasswordEntry extends StatefulWidget {
 class _AnimatedPasswordEntryState extends State<_AnimatedPasswordEntry> {
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final overlayRight = widget.decoration.suffixIcon == null ? 14.0 : 100.0;
     return Stack(
       children: [
@@ -2636,7 +2680,9 @@ class _AnimatedPasswordEntryState extends State<_AnimatedPasswordEntry> {
                 style: widget.style,
                 cellWidth: 16,
                 followEnd: true,
-                backgroundColor: widget.decoration.fillColor ?? Colors.white,
+                backgroundColor:
+                    widget.decoration.fillColor ??
+                    AppPalette.resolve(Colors.white),
               ),
             ),
           ),
@@ -2654,11 +2700,12 @@ class _AccountSuggestions extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       margin: const EdgeInsets.only(top: 6),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE1E6F0)),
+        color: AppPalette.resolve(Colors.white),
+        border: Border.all(color: AppPalette.resolve(const Color(0xFFE1E6F0))),
         borderRadius: BorderRadius.circular(13),
       ),
       child: Column(
@@ -2678,7 +2725,10 @@ class _AccountSuggestions extends StatelessWidget {
               ),
             ),
             if (index < accounts.length - 1)
-              const Divider(height: 1, color: Color(0xFFF0F2F6)),
+              Divider(
+                height: 1,
+                color: AppPalette.resolve(const Color(0xFFF0F2F6)),
+              ),
           ],
         ],
       ),
@@ -2693,11 +2743,12 @@ class _GeneratePasswordButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       width: 54,
       height: 54,
       child: Material(
-        color: const Color(0xFFEAF0FF),
+        color: AppPalette.resolve(const Color(0xFFEAF0FF)),
         borderRadius: BorderRadius.circular(13),
         child: InkWell(
           borderRadius: BorderRadius.circular(13),
@@ -2748,10 +2799,11 @@ class _SheetCustomizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE1E6F0)),
+        border: Border.all(color: AppPalette.resolve(const Color(0xFFE1E6F0))),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -2763,9 +2815,9 @@ class _SheetCustomizeCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 15),
               child: Row(
                 children: [
-                  const Expanded(
+                  Expanded(
                     child: Text(
-                      'Personalizar senha',
+                      tr('Personalizar senha'),
                       style: AppTypography.itemTitle,
                     ),
                   ),
@@ -2773,7 +2825,7 @@ class _SheetCustomizeCard extends StatelessWidget {
                     expanded
                         ? Icons.keyboard_arrow_up
                         : Icons.keyboard_arrow_down,
-                    color: const Color(0xFF8993A8),
+                    color: AppPalette.resolve(const Color(0xFF8993A8)),
                   ),
                 ],
               ),
@@ -2789,12 +2841,9 @@ class _SheetCustomizeCard extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Tamanho',
-                              style: AppTypography.secondary,
-                            ),
+                            Text(tr('Tamanho'), style: AppTypography.secondary),
                             Text(
-                              '$length caracteres',
+                              tx('$length caracteres', '$length characters'),
                               style: AppTypography.secondary,
                             ),
                           ],
@@ -2802,44 +2851,55 @@ class _SheetCustomizeCard extends StatelessWidget {
                         SliderTheme(
                           data: SliderTheme.of(context).copyWith(
                             trackHeight: 6,
-                            activeTrackColor: const Color(0xFF347BFF),
-                            inactiveTrackColor: const Color(0xFFE8EDFA),
-                            thumbColor: const Color(0xFF347BFF),
+                            activeTrackColor: AppPalette.resolve(
+                              const Color(0xFF347BFF),
+                            ),
+                            inactiveTrackColor: AppPalette.resolve(
+                              const Color(0xFFE8EDFA),
+                            ),
+                            thumbColor: AppPalette.resolve(
+                              const Color(0xFF347BFF),
+                            ),
                             thumbShape: const RoundSliderThumbShape(
                               enabledThumbRadius: 10,
                             ),
-                            overlayColor: const Color(0x22347BFF),
+                            overlayColor: AppPalette.resolve(
+                              const Color(0x22347BFF),
+                            ),
                           ),
                           child: Slider(
                             value: length.toDouble(),
                             min: 0,
                             max: 32,
-                            label: '$length caracteres',
+                            label: tx(
+                              '$length caracteres',
+                              '$length characters',
+                            ),
                             onChanged: onLengthChanged,
                           ),
                         ),
                         _SheetSwitchRow(
-                          label: 'Letras maiúsculas',
+                          label: tr('Letras maiúsculas'),
                           value: uppercase,
                           onChanged: onUppercaseChanged,
                         ),
                         _SheetSwitchRow(
-                          label: 'Letras minúsculas',
+                          label: tr('Letras minúsculas'),
                           value: lowercase,
                           onChanged: onLowercaseChanged,
                         ),
                         _SheetSwitchRow(
-                          label: 'Números',
+                          label: tr('Números'),
                           value: numbers,
                           onChanged: onNumbersChanged,
                         ),
                         _SheetSwitchRow(
-                          label: 'Símbolos',
+                          label: tr('Símbolos'),
                           value: symbols,
                           onChanged: onSymbolsChanged,
                         ),
                         _SheetSwitchRow(
-                          label: 'Evitar caracteres semelhantes',
+                          label: tr('Evitar caracteres semelhantes'),
                           value: avoidSimilar,
                           onChanged: onAvoidSimilarChanged,
                         ),
@@ -2867,14 +2927,15 @@ class _SheetSwitchRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Row(
       children: [
         Expanded(child: Text(label, style: AppTypography.secondary)),
         Switch(
           value: value,
           onChanged: onChanged,
-          activeThumbColor: Colors.white,
-          activeTrackColor: const Color(0xFF347BFF),
+          activeThumbColor: AppPalette.resolve(Colors.white),
+          activeTrackColor: AppPalette.resolve(const Color(0xFF347BFF)),
         ),
       ],
     );
@@ -2886,16 +2947,20 @@ class _PasswordsHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    Theme.of(context);
+    return SizedBox(
       height: 58,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
         child: Row(
           children: [
-            SizedBox(width: 30),
+            const SizedBox(width: 30),
             Expanded(
               child: Center(
-                child: Text('Minhas senhas', style: AppTypography.appPageTitle),
+                child: Text(
+                  tr('Minhas senhas'),
+                  style: AppTypography.appPageTitle,
+                ),
               ),
             ),
             SizedBox(
@@ -2916,13 +2981,16 @@ class _PasswordsHeader extends StatelessWidget {
                     top: 11,
                     child: DecoratedBox(
                       decoration: BoxDecoration(
-                        color: Color(0xFFFF5F59),
+                        color: const Color(0xFFFF5F59),
                         shape: BoxShape.circle,
                         border: Border.fromBorderSide(
-                          BorderSide(color: Colors.white, width: 2),
+                          BorderSide(
+                            color: AppPalette.resolve(Colors.white),
+                            width: 2,
+                          ),
                         ),
                       ),
-                      child: SizedBox(width: 8, height: 8),
+                      child: const SizedBox(width: 8, height: 8),
                     ),
                   ),
                 ],
@@ -2942,26 +3010,31 @@ class _SearchField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: isWindowsDesktop ? null : 46,
       decoration: BoxDecoration(
-        color: const Color(0xFFF7F8FB),
+        color: AppPalette.resolve(const Color(0xFFF7F8FB)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(
+        style: TextStyle(
           fontFamily: 'Kumbh Sans',
           fontSize: 15,
           height: 1,
           fontWeight: FontWeight.w400,
           color: AppColors.navy,
         ),
-        decoration: const InputDecoration(
-          contentPadding: EdgeInsets.symmetric(vertical: 14),
-          prefixIcon: Icon(Icons.search, color: Color(0xFF98A1B2), size: 21),
-          hintText: 'Buscar contas ou serviços',
-          hintStyle: TextStyle(
+        decoration: InputDecoration(
+          contentPadding: const EdgeInsets.symmetric(vertical: 14),
+          prefixIcon: const Icon(
+            Icons.search,
+            color: Color(0xFF98A1B2),
+            size: 21,
+          ),
+          hintText: tr('Buscar contas ou serviços'),
+          hintStyle: const TextStyle(
             fontFamily: 'Kumbh Sans',
             fontSize: 14,
             height: 1,
@@ -2982,12 +3055,13 @@ class _HealthFilterNotice extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Semantics(
-      label: 'Filtro de saúde: $label',
+      label: tx('Filtro de saúde: $label', 'Health filter: $label'),
       child: Container(
         padding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
         decoration: BoxDecoration(
-          color: const Color(0xFFEAF1FF),
+          color: AppPalette.resolve(const Color(0xFFEAF1FF)),
           borderRadius: BorderRadius.circular(12),
         ),
         child: Row(
@@ -2996,12 +3070,12 @@ class _HealthFilterNotice extends StatelessWidget {
             const SizedBox(width: 8),
             Expanded(
               child: Text(
-                'Mostrando senhas $label',
+                tx('Mostrando senhas $label', 'Showing $label passwords'),
                 style: AppTypography.secondary.copyWith(color: AppColors.navy),
               ),
             ),
             IconButton(
-              tooltip: 'Limpar filtro',
+              tooltip: tr('Limpar filtro'),
               onPressed: onClear,
               icon: const Icon(Icons.close, size: 20),
               color: AppColors.navy,
@@ -3034,11 +3108,12 @@ class SecurityAlert extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       constraints: const BoxConstraints(minHeight: 72),
       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F1),
+        color: AppPalette.resolve(const Color(0xFFFFF1F1)),
         borderRadius: BorderRadius.circular(12),
       ),
       child: InkWell(
@@ -3055,7 +3130,7 @@ class SecurityAlert extends StatelessWidget {
                 children: [
                   Text(
                     title,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Kumbh Sans',
                       fontSize: 16,
                       height: 1.1,
@@ -3066,7 +3141,7 @@ class SecurityAlert extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     message,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontFamily: 'Kumbh Sans',
                       fontSize: 14,
                       height: 1.15,
@@ -3079,7 +3154,7 @@ class SecurityAlert extends StatelessWidget {
             ),
             if (onClose != null)
               IconButton(
-                tooltip: 'Fechar aviso',
+                tooltip: tr('Fechar aviso'),
                 onPressed: onClose,
                 icon: const Icon(Icons.close, size: 19),
                 color: AppColors.bodyText,
@@ -3087,7 +3162,7 @@ class SecurityAlert extends StatelessWidget {
               )
             else ...[
               const SizedBox(width: 8),
-              const Icon(Icons.chevron_right, color: AppColors.navy, size: 24),
+              Icon(Icons.chevron_right, color: AppColors.navy, size: 24),
             ],
           ],
         ),
@@ -3109,6 +3184,7 @@ class _CollapsibleSectionHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: onTap,
@@ -3244,6 +3320,7 @@ class _AccountsListState extends State<_AccountsList> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     return SizedBox(
       height: isWindowsDesktop ? (textScale >= 1.5 ? 188 : 150) : 136,
@@ -3365,6 +3442,7 @@ class _ServicesListState extends State<_ServicesList> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return _ListFrame(
       child: AnimatedList(
         key: _listKey,
@@ -3389,11 +3467,12 @@ class _ListFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) return child;
     return Container(
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE5EAF3)),
+        color: AppPalette.resolve(Colors.white),
+        border: Border.all(color: AppPalette.resolve(const Color(0xFFE5EAF3))),
         borderRadius: BorderRadius.circular(14),
       ),
       child: child,
@@ -3406,11 +3485,12 @@ class _SoftDivider extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Divider(
+    Theme.of(context);
+    return Divider(
       height: 1,
       thickness: 1,
       indent: 58,
-      color: Color(0xFFF0F2F6),
+      color: AppPalette.resolve(const Color(0xFFF0F2F6)),
     );
   }
 }
@@ -3432,6 +3512,7 @@ class _AccountCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return GestureDetector(
       onTap: onTap,
       child: AnimatedContainer(
@@ -3439,9 +3520,13 @@ class _AccountCard extends StatelessWidget {
         width: 132,
         padding: const EdgeInsets.fromLTRB(10, 10, 10, 9),
         decoration: BoxDecoration(
-          color: selected ? const Color(0xFFF3F7FF) : Colors.white,
+          color: selected
+              ? AppPalette.resolve(const Color(0xFFF3F7FF))
+              : AppPalette.resolve(Colors.white),
           border: Border.all(
-            color: selected ? const Color(0xFF347BFF) : const Color(0xFFE1E6F0),
+            color: selected
+                ? AppPalette.resolve(const Color(0xFF347BFF))
+                : AppPalette.resolve(const Color(0xFFE1E6F0)),
             width: selected ? 1.5 : 1,
           ),
           borderRadius: BorderRadius.circular(14),
@@ -3489,17 +3574,20 @@ class _AccountCard extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 4),
               decoration: BoxDecoration(
                 color: selected
-                    ? const Color(0xFFE2ECFF)
-                    : const Color(0xFFF1F5FF),
+                    ? AppPalette.resolve(const Color(0xFFE2ECFF))
+                    : AppPalette.resolve(const Color(0xFFF1F5FF)),
                 borderRadius: BorderRadius.circular(7),
               ),
               child: Text(
-                '${account.services} serviços',
+                tx(
+                  '${account.services} serviços',
+                  '${account.services} services',
+                ),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.secondary.copyWith(
                   fontSize: 10,
-                  color: const Color(0xFF347BFF),
+                  color: AppPalette.resolve(const Color(0xFF347BFF)),
                 ),
               ),
             ),
@@ -3523,6 +3611,7 @@ class _ServiceRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) {
       return Material(
         color: Colors.transparent,
@@ -3537,8 +3626,10 @@ class _ServiceRow extends StatelessWidget {
                     constraints.maxWidth >= 460 &&
                     MediaQuery.textScalerOf(context).scale(1) < 1.5;
                 final email = Text(
-                  service.email.isEmpty ? 'Sem conta vinculada' : service.email,
-                  style: const TextStyle(
+                  service.email.isEmpty
+                      ? tr('Sem conta vinculada')
+                      : service.email,
+                  style: TextStyle(
                     fontSize: 14,
                     height: 1.5,
                     color: desktopMuted,
@@ -3554,7 +3645,7 @@ class _ServiceRow extends StatelessWidget {
                         children: [
                           Text(
                             service.name,
-                            style: const TextStyle(
+                            style: TextStyle(
                               fontSize: 17,
                               height: 1.4,
                               fontWeight: FontWeight.w600,
@@ -3574,7 +3665,7 @@ class _ServiceRow extends StatelessWidget {
                       favorite: service.favorite,
                       onTap: onFavoriteToggle,
                     ),
-                    const Icon(
+                    Icon(
                       Icons.chevron_right_rounded,
                       color: desktopMuted,
                       size: 20,
@@ -3604,7 +3695,7 @@ class _ServiceRow extends StatelessWidget {
                   const SizedBox(height: 4),
                   Text(
                     service.email.isEmpty
-                        ? 'Sem conta vinculada'
+                        ? tr('Sem conta vinculada')
                         : service.email,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
@@ -3634,12 +3725,13 @@ class _SelectedAccountFilter extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 11, vertical: 7),
         decoration: BoxDecoration(
-          color: const Color(0xFFF1F5FF),
+          color: AppPalette.resolve(const Color(0xFFF1F5FF)),
           borderRadius: BorderRadius.circular(10),
         ),
         child: Row(
@@ -3652,18 +3744,18 @@ class _SelectedAccountFilter extends StatelessWidget {
             const SizedBox(width: 7),
             Expanded(
               child: Text(
-                'Serviços de $email',
+                tx('Serviços de $email', '$email services'),
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
                 style: AppTypography.secondary.copyWith(
-                  color: const Color(0xFF347BFF),
+                  color: AppPalette.resolve(const Color(0xFF347BFF)),
                   fontWeight: FontWeight.w600,
                 ),
               ),
             ),
             IconButton(
               onPressed: onClear,
-              tooltip: 'Mostrar todos os serviços',
+              tooltip: tr('Mostrar todos os serviços'),
               padding: EdgeInsets.zero,
               constraints: const BoxConstraints(minWidth: 25, minHeight: 25),
               visualDensity: VisualDensity.compact,
@@ -3699,7 +3791,10 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          '$label copiado. ${SecureClipboard.clearAfterMessage}',
+          tx(
+            '$label copiado. ${SecureClipboard.clearAfterMessage}',
+            '$label copied. ${SecureClipboard.clearAfterMessage}',
+          ),
           style: const TextStyle(fontFamily: 'Kumbh Sans'),
         ),
         duration: const Duration(milliseconds: 1200),
@@ -3709,8 +3804,9 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Material(
-      color: Colors.white,
+      color: AppPalette.resolve(Colors.white),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -3725,7 +3821,7 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
                   width: isWindowsDesktop ? 0 : 42,
                   height: isWindowsDesktop ? 0 : 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFD9DFEB),
+                    color: AppPalette.resolve(const Color(0xFFD9DFEB)),
                     borderRadius: BorderRadius.circular(99),
                   ),
                 ),
@@ -3753,35 +3849,35 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
                   Icon(
                     service.favorite ? Icons.star : Icons.star_border,
                     color: service.favorite
-                        ? const Color(0xFFF4BB35)
-                        : const Color(0xFF9AA3B5),
+                        ? AppPalette.resolve(const Color(0xFFF4BB35))
+                        : AppPalette.resolve(const Color(0xFF9AA3B5)),
                     size: 23,
                   ),
                 ],
               ),
               const SizedBox(height: 22),
               _DetailValue(
-                label: 'Conta vinculada',
+                label: tr('Conta vinculada'),
                 value: service.email.isEmpty
-                    ? 'Sem conta vinculada'
+                    ? tr('Sem conta vinculada')
                     : service.email,
                 onCopy: service.email.isEmpty
                     ? null
-                    : () => _copy(context, 'Conta', service.email),
+                    : () => _copy(context, tr('Conta'), service.email),
               ),
               _DetailValue(
-                label: 'Usuário',
+                label: tr('Usuário'),
                 value: service.username.isEmpty
-                    ? 'Não informado'
+                    ? tr('Não informado')
                     : service.username,
                 onCopy: service.username.isEmpty
                     ? null
-                    : () => _copy(context, 'Usuário', service.username),
+                    : () => _copy(context, tr('Usuário'), service.username),
               ),
               _DetailValue(
-                label: 'Senha',
+                label: tr('Senha'),
                 value: service.password.isEmpty
-                    ? 'Não informada'
+                    ? tr('Não informada')
                     : _passwordVisible
                     ? service.password
                     : List<String>.filled(
@@ -3790,7 +3886,7 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
                       ).join(),
                 valueStyle: service.password.isEmpty
                     ? null
-                    : const TextStyle(
+                    : TextStyle(
                         fontFamily: 'Kumbh Sans',
                         fontSize: 16,
                         fontWeight: FontWeight.w600,
@@ -3799,7 +3895,7 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
                       ),
                 onCopy: service.password.isEmpty
                     ? null
-                    : () => _copy(context, 'Senha', service.password),
+                    : () => _copy(context, tr('Senha'), service.password),
                 onToggleVisibility: service.password.isEmpty
                     ? null
                     : () =>
@@ -3808,9 +3904,9 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
               ),
               if (service.url.isNotEmpty)
                 _DetailValue(
-                  label: 'Endereço',
+                  label: tr('Endereço'),
                   value: service.url,
-                  onCopy: () => _copy(context, 'Endereço', service.url),
+                  onCopy: () => _copy(context, tr('Endereço'), service.url),
                 ),
               const SizedBox(height: 18),
               Row(
@@ -3820,11 +3916,13 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
                       onPressed: () =>
                           Navigator.pop(context, _ServiceDetailsAction.edit),
                       icon: const Icon(Icons.edit_outlined, size: 19),
-                      label: const Text('Editar'),
+                      label: Text(tr('Editar')),
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
                         minimumSize: const Size.fromHeight(50),
-                        side: const BorderSide(color: Color(0xFFD9E0EC)),
+                        side: BorderSide(
+                          color: AppPalette.resolve(const Color(0xFFD9E0EC)),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(13),
                         ),
@@ -3837,9 +3935,11 @@ class _ServiceDetailsSheetState extends State<_ServiceDetailsSheet> {
                       onPressed: () =>
                           Navigator.pop(context, _ServiceDetailsAction.delete),
                       icon: const Icon(Icons.delete_outline, size: 19),
-                      label: const Text('Excluir'),
+                      label: Text(tr('Excluir')),
                       style: FilledButton.styleFrom(
-                        backgroundColor: const Color(0xFFE65353),
+                        backgroundColor: AppPalette.resolve(
+                          const Color(0xFFE65353),
+                        ),
                         minimumSize: const Size.fromHeight(50),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(13),
@@ -3876,6 +3976,7 @@ class _DetailValue extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.only(bottom: 14),
       child: Column(
@@ -3896,7 +3997,9 @@ class _DetailValue extends StatelessWidget {
               if (onToggleVisibility != null)
                 IconButton(
                   onPressed: onToggleVisibility,
-                  tooltip: obscured ? 'Mostrar $label' : 'Ocultar $label',
+                  tooltip: obscured
+                      ? tx('Mostrar $label', 'Show $label')
+                      : tx('Ocultar $label', 'Hide $label'),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(
                     minWidth: 34,
@@ -3912,7 +4015,7 @@ class _DetailValue extends StatelessWidget {
                 ),
               IconButton(
                 onPressed: onCopy,
-                tooltip: 'Copiar $label',
+                tooltip: tx('Copiar $label', 'Copy $label'),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(minWidth: 34, minHeight: 34),
                 visualDensity: VisualDensity.compact,
@@ -3920,7 +4023,10 @@ class _DetailValue extends StatelessWidget {
               ),
             ],
           ),
-          const Divider(height: 1, color: Color(0xFFF0F2F6)),
+          Divider(
+            height: 1,
+            color: AppPalette.resolve(const Color(0xFFF0F2F6)),
+          ),
         ],
       ),
     );
@@ -3935,12 +4041,17 @@ class _FavoriteButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Semantics(
       button: true,
-      label: favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
+      label: favorite
+          ? tr('Remover dos favoritos')
+          : tr('Adicionar aos favoritos'),
       child: IconButton(
         onPressed: onTap,
-        tooltip: favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos',
+        tooltip: favorite
+            ? tr('Remover dos favoritos')
+            : tr('Adicionar aos favoritos'),
         padding: const EdgeInsets.all(8),
         constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
         visualDensity: VisualDensity.standard,
@@ -3949,7 +4060,9 @@ class _FavoriteButton extends StatelessWidget {
         ),
         icon: Icon(
           favorite ? Icons.star : Icons.star_border,
-          color: favorite ? const Color(0xFFF4BB35) : const Color(0xFF9AA3B5),
+          color: favorite
+              ? AppPalette.resolve(const Color(0xFFF4BB35))
+              : AppPalette.resolve(const Color(0xFF9AA3B5)),
           size: 20,
         ),
       ),
@@ -3964,11 +4077,12 @@ class _ActionsButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Semantics(
       button: true,
-      label: 'Mais opções',
+      label: tr('Mais opções'),
       child: IconButton(
-        tooltip: 'Mais opções',
+        tooltip: tr('Mais opções'),
         onPressed: onTap,
         padding: EdgeInsets.zero,
         visualDensity: VisualDensity.compact,
@@ -3990,8 +4104,9 @@ class _ItemActionsSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Material(
-      color: Colors.white,
+      color: AppPalette.resolve(Colors.white),
       borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       clipBehavior: Clip.antiAlias,
       child: SafeArea(
@@ -4006,7 +4121,7 @@ class _ItemActionsSheet extends StatelessWidget {
                 height: isWindowsDesktop ? 0 : 4,
                 margin: const EdgeInsets.only(bottom: 12),
                 decoration: BoxDecoration(
-                  color: const Color(0xFFD9DFEB),
+                  color: AppPalette.resolve(const Color(0xFFD9DFEB)),
                   borderRadius: BorderRadius.circular(99),
                 ),
               ),
@@ -4023,7 +4138,7 @@ class _ItemActionsSheet extends StatelessWidget {
                 title: Text(
                   deleteLabel,
                   style: AppTypography.itemTitle.copyWith(
-                    color: const Color(0xFFE65353),
+                    color: AppPalette.resolve(const Color(0xFFE65353)),
                   ),
                 ),
                 onTap: () =>
@@ -4044,12 +4159,13 @@ class _EmptySearchResult extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 16),
       child: Column(
         children: [
-          const Text(
-            'Nenhum resultado encontrado',
+          Text(
+            tr('Nenhum resultado encontrado'),
             style: TextStyle(
               fontFamily: 'Kumbh Sans',
               fontSize: 14,
@@ -4058,7 +4174,7 @@ class _EmptySearchResult extends StatelessWidget {
             ),
           ),
           const SizedBox(height: 8),
-          TextButton(onPressed: onClear, child: const Text('Limpar busca')),
+          TextButton(onPressed: onClear, child: Text(tr('Limpar busca'))),
         ],
       ),
     );
@@ -4070,20 +4186,27 @@ class _EmptyAccountsState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const Padding(
-      padding: EdgeInsets.symmetric(vertical: 24, horizontal: 16),
+    Theme.of(context);
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Column(
         children: [
-          Icon(Icons.alternate_email_rounded, size: 38, color: AppColors.blue),
-          SizedBox(height: 12),
+          const Icon(
+            Icons.alternate_email_rounded,
+            size: 38,
+            color: AppColors.blue,
+          ),
+          const SizedBox(height: 12),
           Text(
-            'Nenhuma conta adicionada',
+            tr('Nenhuma conta adicionada'),
             textAlign: TextAlign.center,
             style: AppTypography.itemTitle,
           ),
-          SizedBox(height: 6),
+          const SizedBox(height: 6),
           Text(
-            'Adicione um email principal para encontrar seus serviços com mais facilidade.',
+            tr(
+              'Adicione um email principal para encontrar seus serviços com mais facilidade.',
+            ),
             textAlign: TextAlign.center,
             style: AppTypography.secondary,
           ),
@@ -4104,6 +4227,7 @@ class _EmptyServicesState extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
       child: Column(
@@ -4112,14 +4236,16 @@ class _EmptyServicesState extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             hasSelectedAccount
-                ? 'Esta conta ainda não tem serviços'
-                : 'Seu primeiro serviço começa aqui',
+                ? tr('Esta conta ainda não tem serviços')
+                : tr('Seu primeiro serviço começa aqui'),
             textAlign: TextAlign.center,
             style: AppTypography.sectionTitle,
           ),
           const SizedBox(height: 8),
-          const Text(
-            'Adicione um acesso para guardar suas credenciais com segurança.',
+          Text(
+            tr(
+              'Adicione um acesso para guardar suas credenciais com segurança.',
+            ),
             textAlign: TextAlign.center,
             style: AppTypography.secondary,
           ),
@@ -4127,7 +4253,7 @@ class _EmptyServicesState extends StatelessWidget {
           OutlinedButton.icon(
             onPressed: onAdd,
             icon: const Icon(Icons.add),
-            label: const Text('Adicionar serviço'),
+            label: Text(tr('Adicionar serviço')),
           ),
         ],
       ),
@@ -4210,6 +4336,7 @@ class _BrandIconState extends State<_BrandIcon> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final providerHost = switch (widget.brand) {
       _Brand.gmail => 'gmail.com',
       _Brand.outlook => 'outlook.com',
@@ -4255,7 +4382,7 @@ class _BrandIconState extends State<_BrandIcon> {
               ? Icons.mail_outline_rounded
               : Icons.public_rounded,
           size: 28,
-          color: const Color(0xFF73819D),
+          color: AppPalette.resolve(const Color(0xFF73819D)),
         ),
       );
     }
@@ -4373,11 +4500,11 @@ String _providerName(_Brand brand) {
     case _Brand.genericEmail:
       return 'Email';
     case _Brand.genericService:
-      return 'Serviço';
+      return tr('Serviço');
   }
 }
 
-const Map<_Brand, String> _brandSvg = {
+final Map<_Brand, String> _brandSvg = {
   _Brand.gmail:
       '''<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 36 36"><path fill="#EA4335" d="M4 8.2A4.2 4.2 0 0 1 8.2 4H27.8A4.2 4.2 0 0 1 32 8.2v19.6A4.2 4.2 0 0 1 27.8 32H8.2A4.2 4.2 0 0 1 4 27.8V8.2Z"/><path fill="#fff" d="M8 11.2V27h4.1V15.4L18 20l5.9-4.6V27H28V11.2L18 18.8 8 11.2Z"/><path fill="#34A853" d="M8 11.2 18 18.8v-4.6L10.8 8.7A4.2 4.2 0 0 0 8 11.2Z"/><path fill="#4285F4" d="M28 11.2 18 18.8v-4.6l7.2-5.5a4.2 4.2 0 0 1 2.8 2.5Z"/></svg>''',
   _Brand.outlook:
@@ -4407,11 +4534,14 @@ class _PasswordsBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 78,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F3F8))),
+      decoration: BoxDecoration(
+        color: AppPalette.resolve(Colors.white),
+        border: Border(
+          top: BorderSide(color: AppPalette.resolve(const Color(0xFFF1F3F8))),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -4419,7 +4549,7 @@ class _PasswordsBottomNavigation extends StatelessWidget {
           Expanded(
             child: _PasswordsNavigationItem(
               icon: Icons.home_outlined,
-              label: 'Início',
+              label: tr('Início'),
               onTap: () {
                 final navigator = Navigator.of(context);
                 if (navigator.canPop()) {
@@ -4428,17 +4558,17 @@ class _PasswordsBottomNavigation extends StatelessWidget {
               },
             ),
           ),
-          const Expanded(
+          Expanded(
             child: _PasswordsNavigationItem(
               icon: Icons.lock_outline,
-              label: 'Senhas',
+              label: tr('Senhas'),
               selected: true,
             ),
           ),
           Expanded(
             child: _PasswordsNavigationItem(
               icon: Icons.key_outlined,
-              label: 'Gerador',
+              label: tr('Gerador'),
               onTap: () => Navigator.of(context).pushReplacement(
                 MaterialPageRoute<void>(
                   builder: (_) => const PasswordGeneratorPage(),
@@ -4446,10 +4576,10 @@ class _PasswordsBottomNavigation extends StatelessWidget {
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: _PasswordsNavigationItem(
               icon: Icons.settings_outlined,
-              label: 'Ajustes',
+              label: tr('Ajustes'),
             ),
           ),
         ],
@@ -4473,7 +4603,10 @@ class _PasswordsNavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF347BFF) : const Color(0xFF9AA3B5);
+    Theme.of(context);
+    final color = selected
+        ? AppPalette.resolve(const Color(0xFF347BFF))
+        : AppPalette.resolve(const Color(0xFF9AA3B5));
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
@@ -4659,20 +4792,20 @@ class _ServiceData {
   }
 }
 
-const _defaultAccounts = [
-  _AccountData(
+final _defaultAccounts = [
+  const _AccountData(
     brand: _Brand.gmail,
     provider: 'Gmail',
     email: 'joao@gmail.com',
     services: 5,
   ),
-  _AccountData(
+  const _AccountData(
     brand: _Brand.outlook,
     provider: 'Outlook',
     email: 'joao@outlook.com',
     services: 3,
   ),
-  _AccountData(
+  const _AccountData(
     brand: _Brand.proton,
     provider: 'Proton',
     email: 'contato@proton.me',
@@ -4680,14 +4813,30 @@ const _defaultAccounts = [
   ),
 ];
 
-const _defaultServices = [
-  _ServiceData(brand: _Brand.google, name: 'Google', email: 'joao@gmail.com'),
-  _ServiceData(brand: _Brand.paypal, name: 'PayPal', email: 'joao@outlook.com'),
-  _ServiceData(
+final _defaultServices = [
+  const _ServiceData(
+    brand: _Brand.google,
+    name: 'Google',
+    email: 'joao@gmail.com',
+  ),
+  const _ServiceData(
+    brand: _Brand.paypal,
+    name: 'PayPal',
+    email: 'joao@outlook.com',
+  ),
+  const _ServiceData(
     brand: _Brand.shopify,
     name: 'Shopify',
     email: 'contato@proton.me',
   ),
-  _ServiceData(brand: _Brand.github, name: 'GitHub', email: 'joao@gmail.com'),
-  _ServiceData(brand: _Brand.netflix, name: 'Netflix', email: 'joao@gmail.com'),
+  const _ServiceData(
+    brand: _Brand.github,
+    name: 'GitHub',
+    email: 'joao@gmail.com',
+  ),
+  const _ServiceData(
+    brand: _Brand.netflix,
+    name: 'Netflix',
+    email: 'joao@gmail.com',
+  ),
 ];

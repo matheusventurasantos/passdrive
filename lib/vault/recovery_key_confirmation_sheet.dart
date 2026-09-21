@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import '../windows/desktop_layout.dart';
 
@@ -9,10 +11,11 @@ class RecoveryKeyConfirmationSheet extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SafeArea(
       top: false,
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
         clipBehavior: Clip.antiAlias,
         child: Padding(
@@ -26,19 +29,21 @@ class RecoveryKeyConfirmationSheet extends StatelessWidget {
                   width: isWindowsDesktop ? 0 : 38,
                   height: isWindowsDesktop ? 0 : 4,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFDCE2EC),
+                    color: AppPalette.resolve(const Color(0xFFDCE2EC)),
                     borderRadius: BorderRadius.circular(4),
                   ),
                 ),
               ),
               const SizedBox(height: 20),
-              const Text(
-                'Salvar chave-mestra?',
+              Text(
+                tr('Salvar chave-mestra?'),
                 style: AppTypography.sectionTitle,
               ),
               const SizedBox(height: 12),
-              const Text(
-                'Este arquivo abre seu cofre sem a senha. Guarde-o em um local seguro e não o compartilhe.',
+              Text(
+                tr(
+                  'Este arquivo abre seu cofre sem a senha. Guarde-o em um local seguro e não o compartilhe.',
+                ),
                 style: AppTypography.secondary,
               ),
               const SizedBox(height: 22),
@@ -50,12 +55,14 @@ class RecoveryKeyConfirmationSheet extends StatelessWidget {
                       style: OutlinedButton.styleFrom(
                         foregroundColor: AppColors.navy,
                         padding: const EdgeInsets.symmetric(vertical: 14),
-                        side: const BorderSide(color: Color(0xFFD6DAE7)),
+                        side: BorderSide(
+                          color: AppPalette.resolve(const Color(0xFFD6DAE7)),
+                        ),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('Agora não'),
+                      child: Text(tr('Agora não')),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -69,7 +76,7 @@ class RecoveryKeyConfirmationSheet extends StatelessWidget {
                           borderRadius: BorderRadius.circular(14),
                         ),
                       ),
-                      child: const Text('Baixar chave'),
+                      child: Text(tr('Baixar chave')),
                     ),
                   ),
                 ],

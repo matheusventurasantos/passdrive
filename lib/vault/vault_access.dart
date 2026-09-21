@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../settings/appearance_preferences.dart';
 import 'dart:convert';
 
 import 'package:flutter/services.dart';
@@ -56,7 +58,7 @@ class RecoveryKeyFile {
     } on VaultUnlockException {
       rethrow;
     } on Object {
-      throw const FormatException('Arquivo de chave-mestra inválido.');
+      throw FormatException(tr('Arquivo de chave-mestra inválido.'));
     }
   }
 }
@@ -101,7 +103,7 @@ class VaultBackupFile {
     } on FormatException {
       rethrow;
     } on Object {
-      throw const FormatException('Backup inválido ou de outro cofre.');
+      throw FormatException(tr('Backup inválido ou de outro cofre.'));
     }
   }
 }
@@ -130,14 +132,26 @@ class VaultAccess {
   static Future<bool> enable(SecretKey key) async {
     final bytes = Uint8List.fromList(await key.extractBytes());
     try {
-      return await _invoke<bool>('enable', {'key': bytes}) ?? false;
+      return await _invoke<bool>('enable', {
+            'key': bytes,
+            'language': AppearancePreferences.instance.language,
+          }) ??
+          false;
     } finally {
       bytes.fillRange(0, bytes.length, 0);
     }
   }
 
   static Future<SecretKey> authenticate() async {
-    final bytes = await _invoke<Uint8List>('unlock');
+    final received = await _invoke<Uint8List>('unlock', {
+      'language': AppearancePreferences.instance.language,
+    });
+    return keyFromBiometricBytes(received);
+  }
+
+  static SecretKey keyFromBiometricBytes(Uint8List? received) {
+    // Platform codec buffers may be read-only. Only wipe our owned copy.
+    final bytes = received == null ? null : Uint8List.fromList(received);
     if (bytes == null || bytes.length != 32) {
       bytes?.fillRange(0, bytes.length, 0);
       throw const VaultUnlockException();

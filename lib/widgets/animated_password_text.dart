@@ -1,3 +1,4 @@
+import '../theme/app_palette.dart';
 import 'dart:ui' show lerpDouble;
 
 import 'package:flutter/material.dart';
@@ -12,7 +13,7 @@ class AnimatedPasswordText extends StatefulWidget {
     this.style,
     this.cellWidth,
     this.followEnd = false,
-    this.backgroundColor = Colors.white,
+    this.backgroundColor,
     super.key,
   });
 
@@ -21,7 +22,7 @@ class AnimatedPasswordText extends StatefulWidget {
   final TextStyle? style;
   final double? cellWidth;
   final bool followEnd;
-  final Color backgroundColor;
+  final Color? backgroundColor;
 
   @override
   State<AnimatedPasswordText> createState() => _AnimatedPasswordTextState();
@@ -36,7 +37,7 @@ class _AnimatedPasswordTextState extends State<AnimatedPasswordText>
   late bool _fromObscured;
   late bool _toObscured;
   _PasswordTransition _transition = _PasswordTransition.steady;
-  List<int> _newToOld = const [];
+  List<int> _newToOld = [];
 
   TextStyle get _textStyle =>
       widget.style ??
@@ -78,7 +79,7 @@ class _AnimatedPasswordTextState extends State<AnimatedPasswordText>
     _toCharacters = widget.password.characters.toList();
     _fromObscured = oldWidget.obscured;
     _toObscured = widget.obscured;
-    _newToOld = const [];
+    _newToOld = [];
 
     if (oldWidget.password == widget.password) {
       _transition = _PasswordTransition.visibility;
@@ -295,6 +296,7 @@ class _AnimatedPasswordTextState extends State<AnimatedPasswordText>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (_toCharacters.isEmpty && _fromCharacters.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -305,6 +307,8 @@ class _AnimatedPasswordTextState extends State<AnimatedPasswordText>
             ? constraints.maxWidth
             : _toCharacters.length * _cellWidth;
         final hidden = _hiddenCharacters(viewportWidth);
+        final fadeBackground =
+            widget.backgroundColor ?? AppPalette.resolve(Colors.white);
         return SizedBox(
           height: 32,
           child: Stack(
@@ -331,9 +335,9 @@ class _AnimatedPasswordTextState extends State<AnimatedPasswordText>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            widget.backgroundColor.withValues(alpha: 0),
-                            widget.backgroundColor,
-                            widget.backgroundColor,
+                            fadeBackground.withValues(alpha: 0),
+                            fadeBackground,
+                            fadeBackground,
                           ],
                           stops: const [0, 0.48, 1],
                         ),
@@ -352,9 +356,11 @@ class _AnimatedPasswordTextState extends State<AnimatedPasswordText>
                       padding: const EdgeInsets.symmetric(horizontal: 5),
                       alignment: Alignment.center,
                       decoration: BoxDecoration(
-                        color: const Color(0xFFF0F3FA),
+                        color: AppPalette.resolve(const Color(0xFFF0F3FA)),
                         shape: BoxShape.circle,
-                        border: Border.all(color: const Color(0xFFD9E0EE)),
+                        border: Border.all(
+                          color: AppPalette.resolve(const Color(0xFFD9E0EE)),
+                        ),
                       ),
                       child: Text(
                         '+$hidden',

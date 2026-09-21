@@ -166,4 +166,17 @@ void main() {
     );
     expect(VaultAccess.busy, isFalse);
   });
+
+  test(
+    'biometria aceita buffer nativo somente leitura e preserva a chave',
+    () async {
+      final original = Uint8List.fromList(List.generate(32, (i) => i + 1));
+      final readonly = original.asUnmodifiableView();
+      // Bypass serialization so the test preserves a read-only native buffer.
+      final key = VaultAccess.keyFromBiometricBytes(readonly);
+      expect(await key.extractBytes(), original);
+      expect(readonly, original);
+      key.destroy();
+    },
+  );
 }

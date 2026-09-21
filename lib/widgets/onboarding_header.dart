@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/flutter_svg.dart';
 
+import '../settings/app_strings.dart';
 import '../theme/app_colors.dart';
 
 class OnboardingHeader extends StatelessWidget {
@@ -10,6 +11,7 @@ class OnboardingHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       height: 36,
       child: Row(
@@ -21,11 +23,11 @@ class OnboardingHeader extends StatelessWidget {
           ),
           Expanded(
             child: Text(
-              '$step de 3',
+              tx('$step de 3', '$step of 3'),
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 19,
+                fontSize: 16,
                 height: 1,
                 fontWeight: FontWeight.w400,
                 color: AppColors.bodyText,

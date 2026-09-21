@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:math' as math;
 import '../windows/desktop_layout.dart';
 
@@ -19,20 +21,21 @@ class OnboardingStepOne extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) {
       return DesktopAuthLayout(
-        title: 'Crie seu cofre seguro',
+        title: tr('Crie seu cofre seguro'),
         step: 1,
         illustration: const _SafeIllustration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Guarde suas senhas com segurança no dispositivo.',
+            Text(
+              tr('Guarde suas senhas com segurança no dispositivo.'),
               style: TextStyle(fontSize: 18, height: 1.6, color: desktopMuted),
             ),
             const SizedBox(height: 32),
-            DesktopPrimaryButton(label: 'Continuar', onPressed: onContinue),
+            DesktopPrimaryButton(label: tr('Continuar'), onPressed: onContinue),
           ],
         ),
       );
@@ -42,34 +45,36 @@ class OnboardingStepOne extends StatelessWidget {
       child: OnboardingMobileLayout(
         step: 1,
         primaryAction: OnboardingButton(
-          label: 'Continuar',
+          label: tr('Continuar'),
           onPressed: onContinue,
         ),
-        content: const Column(
+        content: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: 18),
-            _SafeIllustration(),
-            SizedBox(height: 24),
+            const SizedBox(height: 18),
+            const _SafeIllustration(),
+            const SizedBox(height: 24),
             Text(
-              'Crie seu cofre seguro',
+              tr('Crie seu cofre seguro'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 44,
+                fontSize: 30,
                 height: 1.05,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
-                letterSpacing: -1.4,
+                color: AppPalette.resolve(Colors.black),
+                letterSpacing: -0.8,
               ),
             ),
-            SizedBox(height: 14),
+            const SizedBox(height: 14),
             Text(
-              'Guarde suas senhas com segurança no dispositivo. Sincronize quando quiser.',
+              tr(
+                'Guarde suas senhas com segurança no dispositivo. Sincronize quando quiser.',
+              ),
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: const TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 20,
+                fontSize: 16,
                 height: 1.25,
                 fontWeight: FontWeight.w400,
                 color: Color(0xFF697386),
@@ -87,6 +92,7 @@ class _SafeIllustration extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = math.min(320.0, constraints.maxWidth);
@@ -153,6 +159,7 @@ class _AnimatedSafeStarsState extends State<_AnimatedSafeStars>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -165,7 +172,7 @@ class _AnimatedSafeStarsState extends State<_AnimatedSafeStars>
               top: 199,
               size: 40,
               rise: 22,
-              color: const Color(0xFFE1ED32),
+              color: AppPalette.resolve(const Color(0xFFE1ED32)),
             ),
             _buildStar(
               progress: _progress(0.34),
@@ -173,7 +180,7 @@ class _AnimatedSafeStarsState extends State<_AnimatedSafeStars>
               top: 45,
               size: 18,
               rise: 18,
-              color: const Color(0xFF4862E0),
+              color: AppPalette.resolve(const Color(0xFF4862E0)),
             ),
             _buildStar(
               progress: _progress(0.67),
@@ -181,7 +188,7 @@ class _AnimatedSafeStarsState extends State<_AnimatedSafeStars>
               top: 161,
               size: 44,
               rise: 24,
-              color: const Color(0xFF4862E0),
+              color: AppPalette.resolve(const Color(0xFF4862E0)),
             ),
           ],
         );
@@ -293,6 +300,7 @@ class _SwingingLockState extends State<_SwingingLock>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AnimatedBuilder(
       animation: _rotation,
       builder: (context, child) {

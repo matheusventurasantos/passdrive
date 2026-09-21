@@ -1,3 +1,4 @@
+import '../settings/app_strings.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -52,7 +53,7 @@ class PwnedPasswordsClient {
 
     final value = await _lookup(prefix);
     if (utf8.encode(value).length > pwnedPasswordsMaxRangeResponseBytes) {
-      throw const FormatException('Resposta da base muito grande.');
+      throw FormatException(tr('Resposta da base muito grande.'));
     }
     _validateRange(value);
     _rangeCache[prefix] = value;
@@ -71,7 +72,7 @@ class PwnedPasswordsClient {
         const Duration(seconds: 12),
       );
       if (response.statusCode != HttpStatus.ok) {
-        throw const HttpException('Não foi possível consultar a base.');
+        throw HttpException(tr('Não foi possível consultar a base.'));
       }
       return await _readBoundedRange(response);
     } finally {
@@ -81,7 +82,7 @@ class PwnedPasswordsClient {
 
   static Future<String> _readBoundedRange(HttpClientResponse response) async {
     if (response.contentLength > pwnedPasswordsMaxRangeResponseBytes) {
-      throw const FormatException('Resposta da base muito grande.');
+      throw FormatException(tr('Resposta da base muito grande.'));
     }
 
     final bytes = BytesBuilder(copy: false);
@@ -89,7 +90,7 @@ class PwnedPasswordsClient {
     await for (final chunk in response) {
       length += chunk.length;
       if (length > pwnedPasswordsMaxRangeResponseBytes) {
-        throw const FormatException('Resposta da base muito grande.');
+        throw FormatException(tr('Resposta da base muito grande.'));
       }
       bytes.add(chunk);
     }
@@ -104,17 +105,17 @@ class PwnedPasswordsClient {
       if (normalized.isEmpty) continue;
       rows++;
       if (rows > _maxRangeRows) {
-        throw const FormatException('Resposta da base muito grande.');
+        throw FormatException(tr('Resposta da base muito grande.'));
       }
       final separator = normalized.indexOf(':');
       if (separator != 35 || normalized.lastIndexOf(':') != separator) {
-        throw const FormatException('Resposta da base inválida.');
+        throw FormatException(tr('Resposta da base inválida.'));
       }
       final suffix = normalized.substring(0, separator);
       final count = normalized.substring(separator + 1);
       if (!_sha1SuffixPattern.hasMatch(suffix) ||
           !_countPattern.hasMatch(count)) {
-        throw const FormatException('Resposta da base inválida.');
+        throw FormatException(tr('Resposta da base inválida.'));
       }
     }
   }

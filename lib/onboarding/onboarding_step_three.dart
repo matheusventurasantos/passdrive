@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:math' as math;
 import '../windows/desktop_layout.dart';
 
@@ -22,31 +24,38 @@ class OnboardingStepThree extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) {
       return DesktopAuthLayout(
-        title: 'Baixe sua chave-mestra',
+        title: tr('Baixe sua chave-mestra'),
         step: 3,
         illustration: const _AnimatedKeyIllustration(),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DesktopSurface(
+            DesktopSurface(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Icons.key_rounded, size: 32, color: AppColors.blue),
-                  SizedBox(height: 20),
+                  const Icon(
+                    Icons.key_rounded,
+                    size: 32,
+                    color: AppColors.blue,
+                  ),
+                  const SizedBox(height: 20),
                   Text(
-                    'Arquivo de desbloqueio',
+                    tr('Arquivo de desbloqueio'),
                     style: TextStyle(
                       fontSize: 20,
                       fontWeight: FontWeight.w700,
                       color: AppColors.navy,
                     ),
                   ),
-                  SizedBox(height: 12),
+                  const SizedBox(height: 12),
                   Text(
-                    'Este arquivo abre seu cofre. Guarde em local seguro. Não é um backup das senhas.',
+                    tr(
+                      'Este arquivo abre seu cofre. Guarde em local seguro. Não é um backup das senhas.',
+                    ),
                     style: TextStyle(
                       fontSize: 16,
                       height: 1.6,
@@ -58,16 +67,16 @@ class OnboardingStepThree extends StatelessWidget {
             ),
             const SizedBox(height: 28),
             DesktopPrimaryButton(
-              label: 'Baixar chave-mestra',
+              label: tr('Baixar chave-mestra'),
               onPressed: onDownload,
               icon: const Icon(Icons.download_rounded, size: 22),
             ),
             const SizedBox(height: 12),
             TextButton(
               onPressed: onSkip,
-              child: const Text(
-                'Vou baixar depois',
-                style: TextStyle(fontSize: 16),
+              child: Text(
+                tr('Vou baixar depois'),
+                style: const TextStyle(fontSize: 16),
               ),
             ),
           ],
@@ -79,7 +88,7 @@ class OnboardingStepThree extends StatelessWidget {
       child: OnboardingMobileLayout(
         step: 3,
         primaryAction: OnboardingButton(
-          label: 'Baixar chave-mestra',
+          label: tr('Baixar chave-mestra'),
           onPressed: onDownload,
           icon: const Icon(Icons.download_rounded, size: 22),
         ),
@@ -89,37 +98,37 @@ class OnboardingStepThree extends StatelessWidget {
             foregroundColor: AppColors.blue,
             padding: const EdgeInsets.symmetric(vertical: 8),
           ),
-          child: const Text(
-            'Vou baixar depois',
-            style: TextStyle(
+          child: Text(
+            tr('Vou baixar depois'),
+            style: const TextStyle(
               fontFamily: 'Kumbh Sans',
-              fontSize: 18,
+              fontSize: 16,
               height: 1,
               fontWeight: FontWeight.w500,
               color: AppColors.blue,
             ),
           ),
         ),
-        content: const Column(
+        content: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            SizedBox(height: 4),
+            const SizedBox(height: 4),
             Text(
-              'Baixe sua chave-mestra',
+              tr('Baixe sua chave-mestra'),
               textAlign: TextAlign.center,
               style: TextStyle(
                 fontFamily: 'Kumbh Sans',
-                fontSize: 42,
+                fontSize: 30,
                 height: 1.05,
                 fontWeight: FontWeight.w700,
-                color: Colors.black,
-                letterSpacing: -1.4,
+                color: AppPalette.resolve(Colors.black),
+                letterSpacing: -0.8,
               ),
             ),
-            SizedBox(height: 16),
-            _AnimatedKeyIllustration(),
-            SizedBox(height: 16),
-            _MasterKeyCard(),
+            const SizedBox(height: 16),
+            const _AnimatedKeyIllustration(),
+            const SizedBox(height: 16),
+            const _MasterKeyCard(),
           ],
         ),
       ),
@@ -132,35 +141,38 @@ class _MasterKeyCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final icon = Container(
       width: 70,
       height: 70,
-      decoration: const BoxDecoration(
+      decoration: BoxDecoration(
         color: AppColors.paleBlueStrong,
         shape: BoxShape.circle,
       ),
       child: const Icon(Icons.key_rounded, color: AppColors.blue, size: 36),
     );
-    const details = Column(
+    final details = Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Arquivo de desbloqueio',
-          style: TextStyle(
+          tr('Arquivo de desbloqueio'),
+          style: const TextStyle(
             fontFamily: 'Kumbh Sans',
-            fontSize: 20,
+            fontSize: 16,
             height: 1.12,
             fontWeight: FontWeight.w500,
             color: Color(0xFF4D4D4D),
             letterSpacing: -0.5,
           ),
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
-          'Este arquivo abre seu cofre. Guarde em local seguro. Não é um backup das senhas.',
+          tr(
+            'Este arquivo abre seu cofre. Guarde em local seguro. Não é um backup das senhas.',
+          ),
           style: TextStyle(
             fontFamily: 'Kumbh Sans',
-            fontSize: 19,
+            fontSize: 15,
             height: 1.18,
             fontWeight: FontWeight.w400,
             color: AppColors.bodyText,
@@ -178,7 +190,7 @@ class _MasterKeyCard extends StatelessWidget {
           width: double.infinity,
           padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
-            color: Colors.white,
+            color: AppPalette.resolve(Colors.white),
             border: Border.all(color: AppColors.border),
             borderRadius: BorderRadius.circular(24),
           ),
@@ -192,7 +204,7 @@ class _MasterKeyCard extends StatelessWidget {
                   children: [
                     icon,
                     const SizedBox(width: 16),
-                    const Expanded(child: details),
+                    Expanded(child: details),
                   ],
                 ),
         );
@@ -230,6 +242,7 @@ class _AnimatedKeyIllustrationState extends State<_AnimatedKeyIllustration>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return LayoutBuilder(
       builder: (context, constraints) {
         final width = math.min(320.0, constraints.maxWidth);
@@ -285,7 +298,9 @@ class _AnimatedKeyIllustrationState extends State<_AnimatedKeyIllustration>
                                 top: 258,
                                 size: 38,
                                 rise: 20,
-                                color: const Color(0xFFE1ED32),
+                                color: AppPalette.resolve(
+                                  const Color(0xFFE1ED32),
+                                ),
                               ),
                               _buildStar(
                                 progress: _progress(0.67),
@@ -356,6 +371,7 @@ class _KeyCloud extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return CustomPaint(
       size: Size(width, height),
       painter: const _KeyCloudPainter(),
@@ -368,7 +384,7 @@ class _KeyCloudPainter extends CustomPainter {
 
   @override
   void paint(Canvas canvas, Size size) {
-    final paint = Paint()..color = const Color(0xFFD9D9D9);
+    final paint = Paint()..color = AppPalette.resolve(const Color(0xFFD9D9D9));
     final scaleX = size.width / 137;
     final scaleY = size.height / 70;
 

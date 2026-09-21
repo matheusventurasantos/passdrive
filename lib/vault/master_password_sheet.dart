@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart';
 
 import '../theme/app_colors.dart';
@@ -39,11 +41,11 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
     final next = _newController.text;
     final confirmation = _confirmationController.text;
     if (current.isEmpty) {
-      setState(() => _error = 'Digite sua senha atual.');
+      setState(() => _error = tr('Digite sua senha atual.'));
       return;
     }
     if (next != confirmation) {
-      setState(() => _error = 'A confirmação da nova senha não confere.');
+      setState(() => _error = tr('A confirmação da nova senha não confere.'));
       return;
     }
     final policyError = MasterPasswordPolicy.errorFor(next);
@@ -64,7 +66,7 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
       );
       if (mounted) Navigator.of(context).pop();
     } on VaultUnlockException {
-      if (mounted) setState(() => _error = 'A senha atual está incorreta.');
+      if (mounted) setState(() => _error = tr('A senha atual está incorreta.'));
     } on MasterPasswordConfirmationException catch (error) {
       if (mounted) setState(() => _error = error.toString());
     } on MasterPasswordValidationException catch (error) {
@@ -73,7 +75,7 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
       if (mounted) setState(() => _error = error.message);
     } on Object {
       if (mounted) {
-        setState(() => _error = 'Não foi possível salvar a nova senha.');
+        setState(() => _error = tr('Não foi possível salvar a nova senha.'));
       }
     } finally {
       if (mounted) setState(() => _busy = false);
@@ -82,6 +84,7 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final bottom = MediaQuery.viewInsetsOf(context).bottom;
     return SafeArea(
       child: SingleChildScrollView(
@@ -89,21 +92,20 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Alterar senha mestra',
-              style: AppTypography.sectionTitle,
-            ),
+            Text(tr('Alterar senha mestra'), style: AppTypography.sectionTitle),
             const SizedBox(height: 8),
-            const Text(
-              'A chave do cofre será mantida. Apenas a proteção da senha será atualizada.',
+            Text(
+              tr(
+                'A chave do cofre será mantida. Apenas a proteção da senha será atualizada.',
+              ),
               style: AppTypography.secondary,
             ),
             const SizedBox(height: 20),
             const _MasterPasswordWarning(),
             const SizedBox(height: 20),
             _passwordField(
-              label: 'Senha atual',
-              hint: 'Digite a senha atual',
+              label: tr('Senha atual'),
+              hint: tr('Digite a senha atual'),
               controller: _currentController,
               visible: _currentVisible,
               onToggle: () =>
@@ -111,16 +113,16 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
             ),
             const SizedBox(height: 14),
             _passwordField(
-              label: 'Nova senha',
-              hint: 'Crie uma nova senha mestra',
+              label: tr('Nova senha'),
+              hint: tr('Crie uma nova senha mestra'),
               controller: _newController,
               visible: _newVisible,
               onToggle: () => setState(() => _newVisible = !_newVisible),
             ),
             const SizedBox(height: 14),
             _passwordField(
-              label: 'Confirmar nova senha',
-              hint: 'Repita a nova senha',
+              label: tr('Confirmar nova senha'),
+              hint: tr('Repita a nova senha'),
               controller: _confirmationController,
               visible: _confirmationVisible,
               onToggle: () =>
@@ -135,7 +137,7 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
                       child: Text(
                         _error!,
                         style: AppTypography.secondary.copyWith(
-                          color: const Color(0xFFE65353),
+                          color: AppPalette.resolve(const Color(0xFFE65353)),
                           height: 1.3,
                         ),
                       ),
@@ -152,16 +154,16 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
                 ),
               ),
               child: _busy
-                  ? const SizedBox(
+                  ? SizedBox(
                       height: 22,
                       width: 22,
                       child: CircularProgressIndicator(
-                        color: Colors.white,
+                        color: AppPalette.resolve(Colors.white),
                         strokeWidth: 2.5,
                       ),
                     )
-                  : const Text(
-                      'Salvar nova senha',
+                  : Text(
+                      tr('Salvar nova senha'),
                       style: AppTypography.buttonLabel,
                     ),
             ),
@@ -196,7 +198,7 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
             hintText: hint,
             hintStyle: AppTypography.secondary,
             filled: true,
-            fillColor: const Color(0xFFF7F9FC),
+            fillColor: AppPalette.resolve(const Color(0xFFF7F9FC)),
             suffixIcon: IconButton(
               onPressed: onToggle,
               icon: Icon(
@@ -211,7 +213,9 @@ class _MasterPasswordSheetState extends State<MasterPasswordSheet> {
             ),
             enabledBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
-              borderSide: const BorderSide(color: Color(0xFFE1E6F0)),
+              borderSide: BorderSide(
+                color: AppPalette.resolve(const Color(0xFFE1E6F0)),
+              ),
             ),
             focusedBorder: OutlineInputBorder(
               borderRadius: BorderRadius.circular(14),
@@ -229,21 +233,24 @@ class _MasterPasswordWarning extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: const Color(0xFFFFF8E8),
+        color: AppPalette.resolve(const Color(0xFFFFF8E8)),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF4DFAC)),
+        border: Border.all(color: AppPalette.resolve(const Color(0xFFF4DFAC))),
       ),
-      child: const Row(
+      child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(Icons.warning_amber_rounded, color: Color(0xFFC28A16)),
-          SizedBox(width: 10),
+          const Icon(Icons.warning_amber_rounded, color: Color(0xFFC28A16)),
+          const SizedBox(width: 10),
           Expanded(
             child: Text(
-              'Se você perder a senha mestra e a chave-mestra, poderá perder o acesso ao cofre. Guarde as duas com segurança.',
+              tr(
+                'Se você perder a senha mestra e a chave-mestra, poderá perder o acesso ao cofre. Guarde as duas com segurança.',
+              ),
               style: AppTypography.secondary,
             ),
           ),

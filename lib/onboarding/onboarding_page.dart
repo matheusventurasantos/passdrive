@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart' hide showModalBottomSheet;
 import '../windows/adaptive_sheet.dart';
 import 'package:cryptography/cryptography.dart';
@@ -58,50 +60,58 @@ class _OnboardingPageState extends State<OnboardingPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.white,
-      resizeToAvoidBottomInset: true,
-      body: SafeArea(
-        child: Stack(
-          children: [
-            PageView(
-              controller: _pageController,
-              physics: const NeverScrollableScrollPhysics(),
-              onPageChanged: (page) => setState(() => _currentPage = page),
-              children: [
-                OnboardingStepOne(
-                  isActive: _currentPage == 0,
-                  onContinue: _continue,
-                ),
-                OnboardingStepTwo(
-                  initialPassword: _appPassword,
-                  onBiometricsChanged: (value) async {
-                    if (!value) {
-                      await VaultAccess.disable();
-                      return false;
-                    }
-                    _preparedKey ??= await AesGcm.with256bits().newSecretKey();
-                    return VaultAccess.enable(_preparedKey!);
-                  },
-                  onPasswordChanged: (value) => _appPassword = value,
-                  onContinue: _continue,
-                  isActive: _currentPage == 1,
-                ),
-                OnboardingStepThree(
-                  onDownload: _downloadMasterKey,
-                  onSkip: _finishOnboarding,
-                  isActive: _currentPage == 2,
-                ),
-              ],
-            ),
-            if (_hasOpenedHealth)
-              const Positioned.fill(
-                child: ColoredBox(
-                  color: Color(0xCCFFFFFF),
-                  child: Center(child: CircularProgressIndicator()),
-                ),
+    Theme.of(context);
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (!didPop) FocusManager.instance.primaryFocus?.unfocus();
+      },
+      child: Scaffold(
+        backgroundColor: AppPalette.canvas,
+        resizeToAvoidBottomInset: true,
+        body: SafeArea(
+          child: Stack(
+            children: [
+              PageView(
+                controller: _pageController,
+                physics: const NeverScrollableScrollPhysics(),
+                onPageChanged: (page) => setState(() => _currentPage = page),
+                children: [
+                  OnboardingStepOne(
+                    isActive: _currentPage == 0,
+                    onContinue: _continue,
+                  ),
+                  OnboardingStepTwo(
+                    initialPassword: _appPassword,
+                    onBiometricsChanged: (value) async {
+                      if (!value) {
+                        await VaultAccess.disable();
+                        return false;
+                      }
+                      _preparedKey ??= await AesGcm.with256bits()
+                          .newSecretKey();
+                      return VaultAccess.enable(_preparedKey!);
+                    },
+                    onPasswordChanged: (value) => _appPassword = value,
+                    onContinue: _continue,
+                    isActive: _currentPage == 1,
+                  ),
+                  OnboardingStepThree(
+                    onDownload: _downloadMasterKey,
+                    onSkip: _finishOnboarding,
+                    isActive: _currentPage == 2,
+                  ),
+                ],
               ),
-          ],
+              if (_hasOpenedHealth)
+                const Positioned.fill(
+                  child: ColoredBox(
+                    color: Color(0xCCFFFFFF),
+                    child: Center(child: CircularProgressIndicator()),
+                  ),
+                ),
+            ],
+          ),
         ),
       ),
     );
@@ -140,9 +150,11 @@ class _OnboardingPageState extends State<OnboardingPage> {
       if (!mounted) return;
       setState(() => _hasOpenedHealth = false);
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
+        SnackBar(
           content: Text(
-            'Não conseguimos concluir. Tente novamente; seu cofre não será apagado.',
+            tr(
+              'Não conseguimos concluir. Tente novamente; seu cofre não será apagado.',
+            ),
           ),
         ),
       );

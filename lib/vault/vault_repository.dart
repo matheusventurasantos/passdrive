@@ -1,7 +1,9 @@
+import '../settings/app_strings.dart';
 import 'dart:convert';
 
 import 'package:cryptography/cryptography.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:sqflite_common/sqlite_api.dart';
 
 import 'vault_crypto.dart';
@@ -14,7 +16,7 @@ class VaultNotInitializedException implements Exception {
   const VaultNotInitializedException();
 
   @override
-  String toString() => 'O cofre ainda não foi criado.';
+  String toString() => tr('O cofre ainda não foi criado.');
 }
 
 class VaultRepository {
@@ -60,7 +62,7 @@ class VaultRepository {
 
   Future<void> setAutoLock(VaultAutoLock value) {
     if (_closeFuture != null) {
-      return Future.error(StateError('Cofre bloqueado.'));
+      return Future.error(StateError(tr('Cofre bloqueado.')));
     }
     return _writes.enqueue(
       () => _replaceSnapshot(_snapshot.copyWith(autoLock: value)),
@@ -69,7 +71,7 @@ class VaultRepository {
 
   Future<void> setClipboardClear(VaultClipboardClear value) {
     if (_closeFuture != null) {
-      return Future.error(StateError('Cofre bloqueado.'));
+      return Future.error(StateError(tr('Cofre bloqueado.')));
     }
     return _writes.enqueue(
       () => _replaceSnapshot(_snapshot.copyWith(clipboardClear: value)),
@@ -78,7 +80,7 @@ class VaultRepository {
 
   Future<void> setAllowScreenCapture(bool value) {
     if (_closeFuture != null) {
-      return Future.error(StateError('Cofre bloqueado.'));
+      return Future.error(StateError(tr('Cofre bloqueado.')));
     }
     return _writes.enqueue(
       () => _replaceSnapshot(_snapshot.copyWith(allowScreenCapture: value)),
@@ -87,7 +89,7 @@ class VaultRepository {
 
   Future<void> setBreachChecks(Map<String, VaultBreachCheck> values) {
     if (_closeFuture != null) {
-      return Future.error(StateError('Cofre bloqueado.'));
+      return Future.error(StateError(tr('Cofre bloqueado.')));
     }
     final serviceIds = _snapshot.services.map((service) => service.id).toSet();
     final filtered = Map<String, VaultBreachCheck>.unmodifiable({
@@ -130,7 +132,7 @@ class VaultRepository {
   SecretKey _requireVaultKey() {
     final key = _vaultKey;
     if (key == null || key.isDestroyed) {
-      throw StateError('Cofre bloqueado.');
+      throw StateError(tr('Cofre bloqueado.'));
     }
     return key;
   }
@@ -161,7 +163,7 @@ class VaultRepository {
       confirmation: confirmation,
     );
     if (_closeFuture != null) {
-      throw StateError('Cofre bloqueado.');
+      throw StateError(tr('Cofre bloqueado.'));
     }
 
     final verifiedKey = await _crypto.unlock(currentPassword, _metadata);
@@ -186,14 +188,14 @@ class VaultRepository {
       vaultKey,
     );
     await _writes.enqueue(() async {
-      if (_closeFuture != null) throw StateError('Cofre bloqueado.');
+      if (_closeFuture != null) throw StateError(tr('Cofre bloqueado.'));
       await _database.transaction((transaction) async {
         final changed = await transaction.update('vault_metadata', {
           'value': jsonEncode(nextMetadata.toJson()),
         }, where: 'id = 1');
         if (changed != 1) {
-          throw const VaultStorageException(
-            'Não foi possível salvar a nova senha com segurança.',
+          throw VaultStorageException(
+            tr('Não foi possível salvar a nova senha com segurança.'),
           );
         }
       });
@@ -211,7 +213,7 @@ class VaultRepository {
   }
 
   Future<bool> exportBackup() async {
-    if (_closeFuture != null) throw StateError('Cofre bloqueado.');
+    if (_closeFuture != null) throw StateError(tr('Cofre bloqueado.'));
     await _writes.drain();
     final state = await _database.query('vault_state', limit: 1);
     if (state.length != 1) throw const VaultStorageException();
@@ -229,7 +231,7 @@ class VaultRepository {
   }
 
   Future<void> restoreBackup(Uint8List bytes) async {
-    if (_closeFuture != null) throw StateError('Cofre bloqueado.');
+    if (_closeFuture != null) throw StateError(tr('Cofre bloqueado.'));
     try {
       final payload = await VaultBackupFile.decode(bytes, _metadata);
       final decoded = await _crypto.decryptSnapshot(
@@ -238,7 +240,7 @@ class VaultRepository {
       );
       final snapshot = VaultSnapshot.decode(decoded);
       await _writes.enqueue(() async {
-        if (_closeFuture != null) throw StateError('Cofre bloqueado.');
+        if (_closeFuture != null) throw StateError(tr('Cofre bloqueado.'));
         await _database.transaction((transaction) async {
           final changed = await transaction.update('vault_state', {
             'value': jsonEncode(payload.toJson()),
@@ -297,6 +299,11 @@ class VaultRepository {
     } on FormatException {
       await _closeDatabaseQuietly(database);
       rethrow;
+    } on PlatformException {
+      // A biometric cancellation or temporary platform error is not evidence
+      // of a damaged vault. Preserve it so the gate can show the right action.
+      await _closeDatabaseQuietly(database);
+      rethrow;
     } on Object {
       await _closeDatabaseQuietly(database);
       throw const VaultStorageException();
@@ -322,7 +329,7 @@ class VaultRepository {
     try {
       final existing = await database.query('vault_metadata', limit: 1);
       if (existing.isNotEmpty) {
-        throw StateError('O cofre já foi criado.');
+        throw StateError(tr('O cofre já foi criado.'));
       }
 
       final vaultCrypto = crypto ?? VaultCrypto();
@@ -373,8 +380,10 @@ class VaultRepository {
           .decryptSnapshot(encrypted, vaultKey)
           .catchError((error) {
             if (error is VaultUnlockException) {
-              throw const VaultStorageException(
-                'O conteúdo do cofre não pôde ser validado. Nenhum dado foi alterado.',
+              throw VaultStorageException(
+                tr(
+                  'O conteúdo do cofre não pôde ser validado. Nenhum dado foi alterado.',
+                ),
               );
             }
             throw error;
@@ -408,7 +417,7 @@ class VaultRepository {
 
   Future<void> replaceSnapshot(VaultSnapshot snapshot) {
     if (_closeFuture != null) {
-      return Future.error(StateError('Cofre bloqueado.'));
+      return Future.error(StateError(tr('Cofre bloqueado.')));
     }
     return _writes.enqueue(() => _replaceSnapshot(snapshot));
   }
@@ -431,8 +440,8 @@ class VaultRepository {
         'value': encoded,
       }, where: 'id = 1');
       if (changed != 1) {
-        throw const VaultStorageException(
-          'Não foi possível salvar o estado completo do cofre.',
+        throw VaultStorageException(
+          tr('Não foi possível salvar o estado completo do cofre.'),
         );
       }
     });

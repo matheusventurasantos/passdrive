@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+
 class MasterPasswordValidationException implements Exception {
   const MasterPasswordValidationException(this.message);
 
@@ -11,7 +13,7 @@ class MasterPasswordConfirmationException implements Exception {
   const MasterPasswordConfirmationException();
 
   @override
-  String toString() => 'A confirmação da nova senha não confere.';
+  String toString() => tr('A confirmação da nova senha não confere.');
 }
 
 abstract final class MasterPasswordPolicy {
@@ -60,24 +62,27 @@ abstract final class MasterPasswordPolicy {
   static String? errorFor(String password) {
     final normalized = password.trim().toLowerCase();
     if (_common.contains(normalized)) {
-      return 'Escolha uma senha menos comum e previsível.';
+      return tr('Escolha uma senha menos comum e previsível.');
     }
     if (password.length < minimumLength) {
-      return 'A senha mestra precisa ter pelo menos $minimumLength caracteres.';
+      return tx(
+        'A senha mestra precisa ter pelo menos $minimumLength caracteres.',
+        'The master password must have at least $minimumLength characters.',
+      );
     }
 
     if (normalized.runes.toSet().length == 1) {
-      return 'Evite repetir o mesmo caractere.';
+      return tr('Evite repetir o mesmo caractere.');
     }
 
     if (_isOrdered(normalized) || _hasRepeatedBlock(normalized)) {
-      return 'Evite sequências previsíveis de caracteres.';
+      return tr('Evite sequências previsíveis de caracteres.');
     }
 
     final numericRuns = RegExp(r'\d+').allMatches(normalized);
     if (numericRuns.any((match) => match.group(0)!.length >= 8) ||
         RegExp(r'(?:19|20)\d{6}').hasMatch(normalized)) {
-      return 'Evite datas, telefones e sequências numéricas previsíveis.';
+      return tr('Evite datas, telefones e sequências numéricas previsíveis.');
     }
 
     return null;
