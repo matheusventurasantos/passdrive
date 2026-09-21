@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:math';
 import '../windows/desktop_layout.dart';
 import 'password_quality.dart';
@@ -219,7 +221,10 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: Text(
-          'Senha copiada. ${SecureClipboard.clearAfterMessage}',
+          tx(
+            'Senha copiada. ${SecureClipboard.clearAfterMessage}',
+            'Password copied. ${SecureClipboard.clearAfterMessage}',
+          ),
           style: const TextStyle(fontFamily: 'Kumbh Sans'),
         ),
         duration: const Duration(milliseconds: 1200),
@@ -229,12 +234,13 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (isWindowsDesktop) {
       return DesktopPage(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const DesktopHeading('Gerador de senhas'),
+            DesktopHeading(tr('Gerador de senhas')),
             DesktopColumns(
               breakpoint: 760,
               leadingFlex: 6,
@@ -298,7 +304,7 @@ class _PasswordGeneratorPageState extends State<PasswordGeneratorPage> {
       );
     }
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: AppPalette.canvas,
       bottomNavigationBar: widget.showBottomNavigation
           ? const SafeArea(top: false, child: _GeneratorBottomNavigation())
           : null,
@@ -366,15 +372,16 @@ class _GeneratorHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    Theme.of(context);
+    return SizedBox(
       height: 58,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
         child: Stack(
           alignment: Alignment.center,
           children: [
-            Text('Gerador de senhas', style: AppTypography.appPageTitle),
-            Align(
+            Text(tr('Gerador de senhas'), style: AppTypography.appPageTitle),
+            const Align(
               alignment: Alignment.centerRight,
               child: Icon(
                 Icons.info_outline,
@@ -406,6 +413,7 @@ class _PasswordPreviewState extends State<_PasswordPreview> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final password = widget.password;
     final onCopy = widget.onCopy;
     return Container(
@@ -414,18 +422,18 @@ class _PasswordPreviewState extends State<_PasswordPreview> {
           ? const EdgeInsets.symmetric(vertical: 18)
           : const EdgeInsets.fromLTRB(16, 18, 16, 16),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         border: isWindowsDesktop
             ? null
-            : Border.all(color: const Color(0xFFE1E6F0)),
+            : Border.all(color: AppPalette.resolve(const Color(0xFFE1E6F0))),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
         children: [
           Text(
-            'Sua senha segura',
+            tr('Sua senha segura'),
             style: isWindowsDesktop
-                ? const TextStyle(fontSize: 16, color: desktopMuted)
+                ? TextStyle(fontSize: 16, color: desktopMuted)
                 : AppTypography.secondary,
           ),
           const SizedBox(height: 12),
@@ -433,8 +441,8 @@ class _PasswordPreviewState extends State<_PasswordPreview> {
             children: [
               Expanded(
                 child: password.isEmpty
-                    ? const Text(
-                        'Ative pelo menos um tipo de caractere para gerar.',
+                    ? Text(
+                        tr('Ative pelo menos um tipo de caractere para gerar.'),
                         style: AppTypography.secondary,
                       )
                     : AnimatedPasswordText(
@@ -443,7 +451,7 @@ class _PasswordPreviewState extends State<_PasswordPreview> {
                       ),
               ),
               IconButton(
-                tooltip: _obscured ? 'Mostrar senha' : 'Ocultar senha',
+                tooltip: _obscured ? tr('Mostrar senha') : tr('Ocultar senha'),
                 onPressed: password.isEmpty
                     ? null
                     : () => setState(() => _obscured = !_obscured),
@@ -451,14 +459,14 @@ class _PasswordPreviewState extends State<_PasswordPreview> {
                   _obscured
                       ? Icons.visibility_outlined
                       : Icons.visibility_off_outlined,
-                  color: const Color(0xFF73819D),
+                  color: AppPalette.resolve(const Color(0xFF73819D)),
                   size: 22,
                 ),
               ),
               const SizedBox(width: 10),
               IconButton(
                 onPressed: onCopy,
-                tooltip: 'Copiar senha',
+                tooltip: tr('Copiar senha'),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints.tightFor(
                   width: 30,
@@ -487,6 +495,7 @@ class PasswordStrengthBar extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final strength = _strengthFor(password);
 
     return SizedBox(
@@ -539,15 +548,16 @@ class _GenerateButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       width: double.infinity,
       height: 50,
       child: FilledButton.icon(
         onPressed: onPressed,
         icon: const Icon(Icons.sync, size: 23),
-        label: const Text('Gerar outra senha'),
+        label: Text(tr('Gerar outra senha')),
         style: FilledButton.styleFrom(
-          backgroundColor: const Color(0xFF347BFF),
+          backgroundColor: AppPalette.resolve(const Color(0xFF347BFF)),
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(13),
@@ -594,14 +604,15 @@ class _CustomizeCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       padding: isWindowsDesktop
           ? const EdgeInsets.all(24)
           : const EdgeInsets.fromLTRB(16, 8, 10, 8),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE1E6F0)),
+        color: AppPalette.resolve(Colors.white),
+        border: Border.all(color: AppPalette.resolve(const Color(0xFFE1E6F0))),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Column(
@@ -616,13 +627,13 @@ class _CustomizeCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: Text(
-                      'Personalizar senha',
+                      tr('Personalizar senha'),
                       maxLines: isWindowsDesktop ? null : 1,
                       overflow: isWindowsDesktop
                           ? TextOverflow.visible
                           : TextOverflow.ellipsis,
                       style: isWindowsDesktop
-                          ? const TextStyle(
+                          ? TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.w700,
                               color: AppColors.navy,
@@ -654,63 +665,71 @@ class _CustomizeCard extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text(
-                              'Tamanho',
-                              style: AppTypography.secondary,
-                            ),
+                            Text(tr('Tamanho'), style: AppTypography.secondary),
                             Text(
-                              '$length caracteres',
+                              tx('$length caracteres', '$length characters'),
                               style: AppTypography.secondary.copyWith(
-                                color: const Color(0xFF347BFF),
+                                color: AppPalette.resolve(
+                                  const Color(0xFF347BFF),
+                                ),
                               ),
                             ),
                           ],
                         ),
-                        SliderTheme(
-                          data: SliderTheme.of(context).copyWith(
-                            trackHeight: 6,
-                            activeTrackColor: const Color(0xFF347BFF),
-                            inactiveTrackColor: const Color(0xFFE8ECF3),
-                            thumbColor: const Color(0xFF347BFF),
-                            thumbShape: const RoundSliderThumbShape(
-                              enabledThumbRadius: 10,
+                        Padding(
+                          padding: const EdgeInsets.only(bottom: 8),
+                          child: SliderTheme(
+                            data: SliderTheme.of(context).copyWith(
+                              trackHeight: 6,
+                              activeTrackColor: AppPalette.resolve(
+                                const Color(0xFF347BFF),
+                              ),
+                              inactiveTrackColor: AppPalette.resolve(
+                                const Color(0xFFE8ECF3),
+                              ),
+                              thumbColor: AppPalette.resolve(
+                                const Color(0xFF347BFF),
+                              ),
+                              thumbShape: const RoundSliderThumbShape(
+                                enabledThumbRadius: 10,
+                              ),
+                              overlayShape: SliderComponentShape.noOverlay,
                             ),
-                            overlayShape: SliderComponentShape.noOverlay,
-                          ),
-                          child: Slider(
-                            value: length.toDouble(),
-                            min: 0,
-                            max: 32,
-                            onChanged: onLengthChanged,
+                            child: Slider(
+                              value: length.toDouble(),
+                              min: 0,
+                              max: 32,
+                              onChanged: onLengthChanged,
+                            ),
                           ),
                         ),
                         _OptionRow(
                           marker: 'Aa',
-                          label: 'Letras maiúsculas (A–Z)',
+                          label: tr('Letras maiúsculas (A–Z)'),
                           value: uppercase,
                           onChanged: onUppercaseChanged,
                         ),
                         _OptionRow(
                           marker: 'aa',
-                          label: 'Letras minúsculas (a–z)',
+                          label: tr('Letras minúsculas (a–z)'),
                           value: lowercase,
                           onChanged: onLowercaseChanged,
                         ),
                         _OptionRow(
                           marker: '123',
-                          label: 'Números (0–9)',
+                          label: tr('Números (0–9)'),
                           value: numbers,
                           onChanged: onNumbersChanged,
                         ),
                         _OptionRow(
                           marker: '#%',
-                          label: 'Símbolos (!@#\$%)',
+                          label: tr('Símbolos (!@#\$%)'),
                           value: symbols,
                           onChanged: onSymbolsChanged,
                         ),
                         _OptionRow(
                           marker: '',
-                          label: 'Evitar caracteres semelhantes',
+                          label: tr('Evitar caracteres semelhantes'),
                           value: avoidSimilar,
                           onChanged: onAvoidSimilarChanged,
                           showInfo: true,
@@ -742,13 +761,19 @@ class _OptionRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       constraints: BoxConstraints(minHeight: isWindowsDesktop ? 58 : 45),
       padding: isWindowsDesktop
           ? const EdgeInsets.symmetric(vertical: 6)
           : EdgeInsets.zero,
-      decoration: const BoxDecoration(
-        border: Border(top: BorderSide(color: Color(0xFFF0F2F6))),
+      decoration: BoxDecoration(
+        border: Border(
+          top: BorderSide(
+            color: AppPalette.resolve(const Color(0xFFF0F2F6)),
+            width: .8,
+          ),
+        ),
       ),
       child: Row(
         children: [
@@ -762,12 +787,12 @@ class _OptionRow extends StatelessWidget {
                   : EdgeInsets.zero,
               alignment: Alignment.center,
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F5F9),
+                color: AppPalette.resolve(const Color(0xFFF3F5F9)),
                 borderRadius: BorderRadius.circular(7),
               ),
               child: Text(
                 marker,
-                style: const TextStyle(
+                style: TextStyle(
                   fontFamily: 'Kumbh Sans',
                   fontSize: 13,
                   height: 1,
@@ -812,10 +837,10 @@ class _OptionRow extends StatelessWidget {
           Switch(
             value: value,
             onChanged: onChanged,
-            activeThumbColor: Colors.white,
-            activeTrackColor: const Color(0xFF347BFF),
-            inactiveThumbColor: Colors.white,
-            inactiveTrackColor: const Color(0xFFD9DEE8),
+            activeThumbColor: AppPalette.resolve(Colors.white),
+            activeTrackColor: AppPalette.resolve(const Color(0xFF347BFF)),
+            inactiveThumbColor: AppPalette.resolve(Colors.white),
+            inactiveTrackColor: AppPalette.resolve(const Color(0xFFD9DEE8)),
           ),
         ],
       ),
@@ -828,12 +853,13 @@ class _SecurityTipsCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.fromLTRB(15, 14, 12, 13),
       decoration: BoxDecoration(
-        color: Colors.white,
-        border: Border.all(color: const Color(0xFFE1E6F0)),
+        color: AppPalette.resolve(Colors.white),
+        border: Border.all(color: AppPalette.resolve(const Color(0xFFE1E6F0))),
         borderRadius: BorderRadius.circular(15),
       ),
       child: Row(
@@ -842,7 +868,7 @@ class _SecurityTipsCard extends StatelessWidget {
             width: 44,
             height: 44,
             decoration: BoxDecoration(
-              color: const Color(0xFFEAF0FF),
+              color: AppPalette.resolve(const Color(0xFFEAF0FF)),
               borderRadius: BorderRadius.circular(10),
             ),
             child: const Icon(
@@ -852,12 +878,12 @@ class _SecurityTipsCard extends StatelessWidget {
             ),
           ),
           const SizedBox(width: 14),
-          const Expanded(
+          Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Dicas de segurança',
+                  tr('Dicas de segurança'),
                   style: TextStyle(
                     fontFamily: 'Kumbh Sans',
                     fontSize: 16,
@@ -866,9 +892,11 @@ class _SecurityTipsCard extends StatelessWidget {
                     color: AppColors.navy,
                   ),
                 ),
-                SizedBox(height: 6),
+                const SizedBox(height: 6),
                 Text(
-                  'Use senhas únicas para cada conta e guarde-as com segurança.',
+                  tr(
+                    'Use senhas únicas para cada conta e guarde-as com segurança.',
+                  ),
                   style: AppTypography.secondary,
                 ),
               ],
@@ -886,41 +914,44 @@ class _GeneratorBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 78,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F3F8))),
+      decoration: BoxDecoration(
+        color: AppPalette.resolve(Colors.white),
+        border: Border(
+          top: BorderSide(color: AppPalette.resolve(const Color(0xFFF1F3F8))),
+        ),
       ),
       child: Row(
         children: [
           Expanded(
             child: _GeneratorNavigationItem(
               icon: Icons.home_outlined,
-              label: 'Início',
+              label: tr('Início'),
               onTap: () => _goHome(context),
             ),
           ),
           Expanded(
             child: _GeneratorNavigationItem(
               icon: Icons.lock_outline,
-              label: 'Senhas',
+              label: tr('Senhas'),
               onTap: () => Navigator.of(context).pushReplacement(
                 MaterialPageRoute<void>(builder: (_) => const PasswordsPage()),
               ),
             ),
           ),
-          const Expanded(
+          Expanded(
             child: _GeneratorNavigationItem(
               icon: Icons.key_outlined,
-              label: 'Gerador',
+              label: tr('Gerador'),
               selected: true,
             ),
           ),
-          const Expanded(
+          Expanded(
             child: _GeneratorNavigationItem(
               icon: Icons.settings_outlined,
-              label: 'Ajustes',
+              label: tr('Ajustes'),
             ),
           ),
         ],
@@ -948,7 +979,10 @@ class _GeneratorNavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF347BFF) : const Color(0xFF9AA3B5);
+    Theme.of(context);
+    final color = selected
+        ? AppPalette.resolve(const Color(0xFF347BFF))
+        : AppPalette.resolve(const Color(0xFF9AA3B5));
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

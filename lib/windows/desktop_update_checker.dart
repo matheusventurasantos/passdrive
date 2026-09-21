@@ -1,3 +1,4 @@
+import '../settings/app_strings.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -58,7 +59,9 @@ class DesktopUpdateChecker {
       for (final item in assets) {
         if (item is! Map<String, dynamic>) continue;
         final name = item['name']?.toString() ?? '';
-        final url = Uri.tryParse(item['browser_download_url']?.toString() ?? '');
+        final url = Uri.tryParse(
+          item['browser_download_url']?.toString() ?? '',
+        );
         final digest = _normalizeDigest(item['digest']?.toString());
         if (url == null || digest == null || !_isInstaller(name, url)) continue;
         return DesktopUpdateInfo(
@@ -82,7 +85,8 @@ class DesktopUpdateChecker {
     final directory = await getTemporaryDirectory();
     final filename = 'PassDrive-update-${update.version}.exe';
     final installer = File(path.join(directory.path, filename));
-    final client = HttpClient()..connectionTimeout = const Duration(seconds: 10);
+    final client = HttpClient()
+      ..connectionTimeout = const Duration(seconds: 10);
     try {
       final request = await client.getUrl(update.downloadUrl);
       request.headers
@@ -90,7 +94,9 @@ class DesktopUpdateChecker {
         ..set(HttpHeaders.userAgentHeader, 'PassDrive-Updater');
       final response = await request.close();
       if (response.statusCode != HttpStatus.ok) {
-        throw const DesktopUpdateException('Não foi possível baixar a atualização.');
+        throw DesktopUpdateException(
+          tr('Não foi possível baixar a atualização.'),
+        );
       }
 
       final total = response.contentLength;
@@ -116,14 +122,15 @@ class DesktopUpdateChecker {
         } on Object {
           // A failed cleanup must not hide the validation failure.
         }
-        throw const DesktopUpdateException('A atualização não passou na validação de segurança.');
+        throw DesktopUpdateException(
+          tr('A atualização não passou na validação de segurança.'),
+        );
       }
 
-      await Process.start(
-        installer.path,
-        const ['/SILENT', '/CLOSEAPPLICATIONS'],
-        runInShell: false,
-      );
+      await Process.start(installer.path, const [
+        '/SILENT',
+        '/CLOSEAPPLICATIONS',
+      ], runInShell: false);
       return installer.path;
     } finally {
       client.close(force: true);
@@ -170,9 +177,8 @@ class DesktopUpdateChecker {
     ];
   }
 
-  String _hex(List<int> bytes) => bytes
-      .map((byte) => byte.toRadixString(16).padLeft(2, '0'))
-      .join();
+  String _hex(List<int> bytes) =>
+      bytes.map((byte) => byte.toRadixString(16).padLeft(2, '0')).join();
 }
 
 class DesktopUpdateException implements Exception {

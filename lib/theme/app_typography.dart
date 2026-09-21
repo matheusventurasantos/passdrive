@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'app_colors.dart';
 
 abstract final class AppTypography {
-  static const appPageTitle = TextStyle(
+  static TextStyle get appPageTitle => TextStyle(
     fontFamily: 'Kumbh Sans',
     fontSize: 20,
     height: 1,
@@ -11,7 +11,7 @@ abstract final class AppTypography {
     color: AppColors.navy,
   );
 
-  static const sectionTitle = TextStyle(
+  static TextStyle get sectionTitle => TextStyle(
     fontFamily: 'Kumbh Sans',
     fontSize: 20,
     height: 1,
@@ -19,7 +19,7 @@ abstract final class AppTypography {
     color: AppColors.navy,
   );
 
-  static const itemTitle = TextStyle(
+  static TextStyle get itemTitle => TextStyle(
     fontFamily: 'Kumbh Sans',
     fontSize: 16,
     height: 1.05,
@@ -27,7 +27,7 @@ abstract final class AppTypography {
     color: AppColors.navy,
   );
 
-  static const secondary = TextStyle(
+  static TextStyle get secondary => TextStyle(
     fontFamily: 'Kumbh Sans',
     fontSize: 14,
     height: 1.05,
@@ -61,7 +61,7 @@ abstract final class AppTypography {
     letterSpacing: -1.8,
   );
 
-  static const body = TextStyle(
+  static TextStyle get body => TextStyle(
     fontFamily: 'Kumbh Sans',
     fontSize: 27,
     height: 1.04,

@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:math' as math;
 import 'package:flutter/material.dart' hide showModalBottomSheet;
 import 'package:flutter/material.dart' as material;
@@ -30,7 +32,7 @@ Future<T?> showModalBottomSheet<T>({
     context: context,
     barrierDismissible: true,
     barrierLabel: MaterialLocalizations.of(context).modalBarrierDismissLabel,
-    barrierColor: const Color(0x6615224C),
+    barrierColor: AppPalette.resolve(const Color(0x6615224C)),
     transitionDuration: MediaQuery.disableAnimationsOf(context)
         ? Duration.zero
         : const Duration(milliseconds: 180),
@@ -52,7 +54,7 @@ Future<T?> showModalBottomSheet<T>({
               maxHeight: math.max(100, constraints.maxHeight - 48),
             ),
             child: Material(
-              color: Colors.white,
+              color: AppPalette.resolve(Colors.white),
               clipBehavior: Clip.antiAlias,
               borderRadius: BorderRadius.circular(24),
               child: Column(
@@ -64,9 +66,9 @@ Future<T?> showModalBottomSheet<T>({
                     child: Padding(
                       padding: const EdgeInsets.only(top: 8, right: 8),
                       child: IconButton(
-                        tooltip: 'Fechar janela',
+                        tooltip: tr('Fechar janela'),
                         onPressed: () => Navigator.of(context).pop(),
-                        icon: const Icon(
+                        icon: Icon(
                           Icons.close_rounded,
                           color: desktopMuted,
                           size: 20,
@@ -98,6 +100,7 @@ class _MobileSheetSurface extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Stack(
       fit: StackFit.passthrough,
       children: [
@@ -109,17 +112,19 @@ class _MobileSheetSurface extends StatelessWidget {
           child: IgnorePointer(
             child: Container(
               height: 28,
-              decoration: const BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+              decoration: BoxDecoration(
+                color: AppPalette.resolve(Colors.white),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(24),
+                ),
               ),
               alignment: Alignment.center,
               child: Container(
                 width: 38,
                 height: 4,
-                decoration: const BoxDecoration(
-                  color: Color(0xFFDCE2EC),
-                  borderRadius: BorderRadius.all(Radius.circular(4)),
+                decoration: BoxDecoration(
+                  color: AppPalette.resolve(const Color(0xFFDCE2EC)),
+                  borderRadius: const BorderRadius.all(Radius.circular(4)),
                 ),
               ),
             ),

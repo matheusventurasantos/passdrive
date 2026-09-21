@@ -1,8 +1,10 @@
+import '../settings/app_strings.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import '../vault/vault_models.dart';
+import '../settings/appearance_preferences.dart';
 import 'sync_protocol.dart';
 import 'sync_store.dart';
 
@@ -44,7 +46,7 @@ class MobileSync extends ChangeNotifier {
       ready = false,
       background = false,
       _actionBusy = false;
-  String name = 'Celular', pendingDevice = '';
+  String name = tr('Celular'), pendingDevice = '';
   String? error;
   List<LanPeer> get computers =>
       discovery?.peers.values
@@ -53,13 +55,13 @@ class MobileSync extends ChangeNotifier {
       [];
 
   Future<void> start({bool discover = true, bool useNative = true}) async {
+    AppearancePreferences.instance.addListener(publish);
     try {
       await preferences.load();
       if (_closed) return;
-      // Each owner controller belongs to one unlocked vault session. A cold
-      // restart must not revive grants left behind by process death.
-      preferences.devices.clear();
-      await preferences.save();
+      // Grants are stored only in protected storage and are still revoked when
+      // the vault is explicitly locked. Keeping them here enables the user's
+      // per-device trust choice to survive a regular app or desktop restart.
       if (useNative) {
         try {
           final info = await native.invokeMapMethod<String, dynamic>('info');
@@ -107,7 +109,7 @@ class MobileSync extends ChangeNotifier {
       _timer = Timer.periodic(const Duration(seconds: 5), (_) => _tick());
       _changed();
     } on Object {
-      error = 'Não foi possível iniciar as conexões locais.';
+      error = tr('Não foi possível iniciar as conexões locais.');
       _changed();
     }
   }
@@ -118,6 +120,7 @@ class MobileSync extends ChangeNotifier {
       final grant = preferences.devices[peer.id];
       if (grant != null &&
           grant.valid() &&
+          grant.trusted &&
           peer.resume == preferences.id &&
           !links.containsKey(peer.id) &&
           !_connecting.contains(peer.id) &&
@@ -154,7 +157,7 @@ class MobileSync extends ChangeNotifier {
         !isLocalAddress(peer.address) ||
         !_connecting.add(peer.id) ||
         links.containsKey(peer.id)) {
-      throw StateError('Conexão indisponível.');
+      throw StateError(tr('Conexão indisponível.'));
     }
     SyncWire? wire;
     SyncLink? link;
@@ -163,9 +166,9 @@ class MobileSync extends ChangeNotifier {
     final previous = preferences.devices[peer.id];
     bool saved = false;
     try {
-      if (operation.canceled) throw StateError('Pareamento cancelado.');
+      if (operation.canceled) throw StateError(tr('Pareamento cancelado.'));
       if (mode == 'resume' && (previous == null || !previous.valid())) {
-        throw const FormatException('Autorização expirada.');
+        throw FormatException(tr('Autorização expirada.'));
       }
       wire = SyncWire(
         await WebSocket.connect(
@@ -174,7 +177,7 @@ class MobileSync extends ChangeNotifier {
       );
       operation.wire = wire;
       if (_closed || operation.canceled) {
-        throw StateError('Pareamento cancelado.');
+        throw StateError(tr('Pareamento cancelado.'));
       }
       final ticket = mode == 'resume' ? '' : peer.ticket;
       final identity = 'v1:${peer.id}:${preferences.id}:$mode:$ticket';
@@ -191,7 +194,7 @@ class MobileSync extends ChangeNotifier {
       wire.send(proof);
       final key = srp.verify(await wire.read());
       if (_closed || operation.canceled) {
-        throw StateError('Pareamento cancelado.');
+        throw StateError(tr('Pareamento cancelado.'));
       }
       link = SyncLink(
         wire,
@@ -216,12 +219,14 @@ class MobileSync extends ChangeNotifier {
       await preferences.save();
       saved = true;
       if (_closed || operation.canceled) {
-        throw StateError('Pareamento cancelado.');
+        throw StateError(tr('Pareamento cancelado.'));
       }
       await link.send({'type': 'grant', 'grant': _mirror(grant).toJson()});
       final acknowledged = await link.cipher.decrypt(await wire.read());
-      if (_closed || operation.canceled || acknowledged['type'] != 'authorized') {
-        throw StateError('Conexão não autorizada.');
+      if (_closed ||
+          operation.canceled ||
+          acknowledged['type'] != 'authorized') {
+        throw StateError(tr('Conexão não autorizada.'));
       }
       links[peer.id] = link;
       await _sendSnapshot(link);
@@ -258,6 +263,8 @@ class MobileSync extends ChangeNotifier {
     createdAt: g.createdAt,
     lastSeen: g.lastSeen,
     expiresAt: g.expiresAt,
+    trusted: g.trusted,
+    lockOnFocusLoss: g.lockOnFocusLoss,
   );
   Future<void> _sendSnapshot(SyncLink link) async {
     if (_closed) return;
@@ -268,7 +275,11 @@ class MobileSync extends ChangeNotifier {
       services: source.services,
       breachChecks: source.breachChecks,
     );
-    await link.send({'type': 'snapshot', 'snapshot': view.toJson()});
+    await link.send({
+      'type': 'snapshot',
+      'snapshot': view.toJson(),
+      'theme': AppearancePreferences.instance.sharedTheme,
+    });
   }
 
   void publish() {
@@ -301,16 +312,16 @@ class MobileSync extends ChangeNotifier {
             );
             final handled = _requests.putIfAbsent(link, () => <String>{});
             if (handled.contains(action.requestId)) {
-              throw const FormatException('Solicitação repetida.');
+              throw FormatException(tr('Solicitação repetida.'));
             }
             if (handled.length >= 256) {
-              throw const FormatException('Limite de solicitações atingido.');
+              throw FormatException(tr('Limite de solicitações atingido.'));
             }
             handled.add(action.requestId);
             // Do not stop processing heartbeats while the owner fills a form.
             unawaited(_perform(id, link, action));
           default:
-            throw const FormatException('Mensagem inválida.');
+            throw FormatException(tr('Mensagem inválida.'));
         }
       }
     } on Object {
@@ -326,7 +337,7 @@ class MobileSync extends ChangeNotifier {
           .send({
             'type': 'result',
             'requestId': action.requestId,
-            'message': 'O celular já está atendendo outra solicitação.',
+            'message': tr('O celular já está atendendo outra solicitação.'),
           })
           .catchError((Object _) {});
       return;
@@ -335,7 +346,7 @@ class MobileSync extends ChangeNotifier {
     try {
       final accepted = await onAction(
         action,
-        preferences.devices[id]?.name ?? 'Computador',
+        preferences.devices[id]?.name ?? tr('Computador'),
       );
       if (_closed || !identical(links[id], link)) return;
       await _sendSnapshot(link);
@@ -343,15 +354,15 @@ class MobileSync extends ChangeNotifier {
         'type': 'result',
         'requestId': action.requestId,
         'message': accepted
-            ? 'Solicitação concluída no celular.'
-            : 'Solicitação cancelada no celular.',
+            ? tr('Solicitação concluída no celular.')
+            : tr('Solicitação cancelada no celular.'),
       });
     } on Object {
       await link
           .send({
             'type': 'result',
             'requestId': action.requestId,
-            'message': 'Não foi possível concluir no celular.',
+            'message': tr('Não foi possível concluir no celular.'),
           })
           .catchError((Object _) {});
     } finally {
@@ -382,6 +393,34 @@ class MobileSync extends ChangeNotifier {
     final old = preferences.devices[id];
     if (old == null) return;
     final grant = old.update(duration: duration);
+    preferences.devices[id] = grant;
+    try {
+      await preferences.save();
+    } on Object {
+      preferences.devices[id] = old;
+      rethrow;
+    }
+    await links[id]?.send({'type': 'grant', 'grant': _mirror(grant).toJson()});
+    _changed();
+  }
+
+  Future<void> setTrusted(String id, bool value) =>
+      _setDeviceOption(id, trusted: value);
+
+  Future<void> setLockOnFocusLoss(String id, bool value) =>
+      _setDeviceOption(id, lockOnFocusLoss: value);
+
+  Future<void> _setDeviceOption(
+    String id, {
+    bool? trusted,
+    bool? lockOnFocusLoss,
+  }) async {
+    final old = preferences.devices[id];
+    if (old == null) return;
+    final grant = old.update(
+      trusted: trusted,
+      lockOnFocusLoss: lockOnFocusLoss,
+    );
     preferences.devices[id] = grant;
     try {
       await preferences.save();
@@ -437,6 +476,7 @@ class MobileSync extends ChangeNotifier {
   Future<void> lock() async {
     if (_closed) return;
     _closed = true;
+    AppearancePreferences.instance.removeListener(publish);
     incomingPairing = null;
     for (final attempt in _attempts) {
       attempt.cancel();
@@ -455,7 +495,7 @@ class MobileSync extends ChangeNotifier {
     try {
       await preferences.save();
     } on Object {
-      error = 'Conexões encerradas. Não foi possível salvar a revogação.';
+      error = tr('Conexões encerradas. Não foi possível salvar a revogação.');
     } finally {
       await Future.wait(
         active.map((link) async {

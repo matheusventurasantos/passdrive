@@ -1,3 +1,6 @@
+import '../settings/app_strings.dart';
+import '../settings/appearance_preferences.dart';
+import '../theme/app_palette.dart';
 import 'dart:math' as math;
 import '../windows/desktop_layout.dart';
 
@@ -30,8 +33,9 @@ class PasswordHealthPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AnimatedBuilder(
-      animation: breachCheck ?? Listenable.merge(const []),
+      animation: breachCheck ?? Listenable.merge([]),
       builder: (context, _) {
         final summary = remoteSnapshot != null
             ? _HealthSummary.fromSnapshot(remoteSnapshot!, null)
@@ -40,7 +44,7 @@ class PasswordHealthPage extends StatelessWidget {
             : _HealthSummary.fromVault(vault!, breachCheck);
         if (isWindowsDesktop) return _desktopHome(context, summary);
         return Scaffold(
-          backgroundColor: Colors.white,
+          backgroundColor: AppPalette.canvas,
           body: SafeArea(
             bottom: showBottomNavigation,
             child: Column(
@@ -57,7 +61,7 @@ class PasswordHealthPage extends StatelessWidget {
                             children: [
                               Text(
                                 summary.statusText,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontFamily: 'Kumbh Sans',
                                   fontSize: 13,
                                   height: 1,
@@ -67,7 +71,7 @@ class PasswordHealthPage extends StatelessWidget {
                               ),
                               if (breachCheck?.isChecking == true) ...[
                                 const SizedBox(width: 7),
-                                const SizedBox(
+                                SizedBox(
                                   width: 13,
                                   height: 13,
                                   child: CircularProgressIndicator(
@@ -133,30 +137,30 @@ class PasswordHealthPage extends StatelessWidget {
     final entries = [
       (
         Icons.gpp_bad_outlined,
-        'Comprometidas',
+        tr('Comprometidas'),
         summary.compromised?.toString() ?? '—',
-        const Color(0xFFE65353),
+        AppPalette.resolve(const Color(0xFFE65353)),
         'compromised',
       ),
       (
         Icons.lock_open_rounded,
-        'Fracas',
+        tr('Fracas'),
         '${summary.weak}',
-        const Color(0xFFDF820F),
+        AppPalette.resolve(const Color(0xFFDF820F)),
         'weak',
       ),
       (
         Icons.sync_rounded,
-        'Reutilizadas',
+        tr('Reutilizadas'),
         '${summary.reused}',
         AppColors.blue,
         'reused',
       ),
       (
         Icons.verified_user_outlined,
-        'Seguras',
+        tr('Seguras'),
         '${summary.secure}',
-        const Color(0xFF32AD72),
+        AppPalette.resolve(const Color(0xFF32AD72)),
         'secure',
       ),
     ];
@@ -165,11 +169,11 @@ class PasswordHealthPage extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           DesktopHeading(
-            'Saúde das senhas',
+            tr('Saúde das senhas'),
             trailing: TextButton.icon(
               onPressed: () => onOpenPasswords?.call(null),
               icon: const Icon(Icons.arrow_forward_rounded, size: 18),
-              label: const Text('Ver senhas'),
+              label: Text(tr('Ver senhas')),
             ),
           ),
           DesktopColumns(
@@ -180,10 +184,10 @@ class PasswordHealthPage extends StatelessWidget {
             leading: DesktopSurface(
               child: Column(
                 children: [
-                  const Align(
+                  Align(
                     alignment: Alignment.centerLeft,
                     child: Text(
-                      'Visão geral',
+                      tr('Visão geral'),
                       style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.w700,
@@ -206,7 +210,7 @@ class PasswordHealthPage extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       if (breachCheck?.isChecking == true) ...[
-                        const SizedBox.square(
+                        SizedBox.square(
                           dimension: 14,
                           child: CircularProgressIndicator(
                             strokeWidth: 1.7,
@@ -219,7 +223,7 @@ class PasswordHealthPage extends StatelessWidget {
                         child: Text(
                           summary.statusText,
                           textAlign: TextAlign.center,
-                          style: const TextStyle(
+                          style: TextStyle(
                             fontSize: 14,
                             color: desktopMuted,
                             height: 1.5,
@@ -235,8 +239,8 @@ class PasswordHealthPage extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Text(
-                    'Resumo das senhas',
+                  Text(
+                    tr('Resumo das senhas'),
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w700,
@@ -245,7 +249,7 @@ class PasswordHealthPage extends StatelessWidget {
                   ),
                   const SizedBox(height: 14),
                   for (var i = 0; i < entries.length; i++) ...[
-                    if (i > 0) const Divider(height: 1, color: desktopLine),
+                    if (i > 0) Divider(height: 1, color: desktopLine),
                     InkWell(
                       borderRadius: BorderRadius.circular(12),
                       onTap: () => onOpenPasswords?.call(entries[i].$5),
@@ -269,7 +273,7 @@ class PasswordHealthPage extends StatelessWidget {
                             Expanded(
                               child: Text(
                                 entries[i].$2,
-                                style: const TextStyle(
+                                style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,
                                   color: AppColors.navy,
@@ -279,14 +283,14 @@ class PasswordHealthPage extends StatelessWidget {
                             const SizedBox(width: 12),
                             Text(
                               entries[i].$3,
-                              style: const TextStyle(
+                              style: TextStyle(
                                 fontSize: 28,
                                 fontWeight: FontWeight.w700,
                                 color: AppColors.navy,
                               ),
                             ),
                             const SizedBox(width: 12),
-                            const Icon(
+                            Icon(
                               Icons.chevron_right_rounded,
                               size: 20,
                               color: desktopMuted,
@@ -327,22 +331,23 @@ class _HealthHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return const SizedBox(
+    Theme.of(context);
+    return SizedBox(
       height: 58,
       child: Padding(
-        padding: EdgeInsets.symmetric(horizontal: 22),
+        padding: const EdgeInsets.symmetric(horizontal: 22),
         child: Row(
           children: [
-            SizedBox(width: 30),
+            const SizedBox(width: 30),
             Expanded(
               child: Center(
                 child: Text(
-                  'Saúde das senhas',
+                  tr('Saúde das senhas'),
                   style: AppTypography.appPageTitle,
                 ),
               ),
             ),
-            SizedBox(width: 30),
+            const SizedBox(width: 30),
           ],
         ),
       ),
@@ -378,6 +383,7 @@ class _ScoreBubblesState extends State<_ScoreBubbles>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return AnimatedBuilder(
       animation: _controller,
       builder: (context, child) {
@@ -390,7 +396,7 @@ class _ScoreBubblesState extends State<_ScoreBubbles>
               top: 151,
               size: 9,
               rise: 34,
-              color: const Color(0xFFB9D2FF),
+              color: AppPalette.scoreBubble(const Color(0xFFB9D2FF)),
             ),
             _buildBubble(
               progress: _progress(0.26),
@@ -398,7 +404,7 @@ class _ScoreBubblesState extends State<_ScoreBubbles>
               top: 87,
               size: 6,
               rise: 28,
-              color: const Color(0xFFD7E5FF),
+              color: AppPalette.scoreBubble(const Color(0xFFD7E5FF)),
             ),
             _buildBubble(
               progress: _progress(0.51),
@@ -406,7 +412,7 @@ class _ScoreBubblesState extends State<_ScoreBubbles>
               top: 71,
               size: 8,
               rise: 36,
-              color: const Color(0xFFAFCBFF),
+              color: AppPalette.scoreBubble(const Color(0xFFAFCBFF)),
             ),
             _buildBubble(
               progress: _progress(0.76),
@@ -414,7 +420,7 @@ class _ScoreBubblesState extends State<_ScoreBubbles>
               top: 155,
               size: 5,
               rise: 25,
-              color: const Color(0xFFD7E5FF),
+              color: AppPalette.scoreBubble(const Color(0xFFD7E5FF)),
             ),
           ],
         );
@@ -467,12 +473,19 @@ class _ScoreRing extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return TweenAnimationBuilder<double>(
       tween: Tween(begin: 0, end: summary.score / 100),
       duration: const Duration(milliseconds: 900),
       curve: Curves.easeOutCubic,
       builder: (context, progress, child) {
-        return CustomPaint(painter: _ScoreRingPainter(progress), child: child);
+        return CustomPaint(
+          painter: _ScoreRingPainter(
+            progress,
+            AppearancePreferences.instance.dark,
+          ),
+          child: child,
+        );
       },
       child: Center(
         child: Column(
@@ -480,18 +493,18 @@ class _ScoreRing extends StatelessWidget {
           children: [
             Text(
               '${summary.score}',
-              style: const TextStyle(
+              style: TextStyle(
                 fontFamily: 'Kumbh Sans',
                 fontSize: 56,
                 height: 0.95,
                 fontWeight: FontWeight.w700,
-                color: Color(0xFF2F6FEB),
+                color: AppPalette.scoreRingBlue,
                 letterSpacing: -1.5,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'Pontuação',
+            Text(
+              tr('Pontuação'),
               style: TextStyle(
                 fontFamily: 'Kumbh Sans',
                 fontSize: 15,
@@ -532,9 +545,10 @@ class _ScoreRing extends StatelessWidget {
 }
 
 class _ScoreRingPainter extends CustomPainter {
-  const _ScoreRingPainter(this.progress);
+  const _ScoreRingPainter(this.progress, this.darkMode);
 
   final double progress;
+  final bool darkMode;
 
   @override
   void paint(Canvas canvas, Size size) {
@@ -548,7 +562,7 @@ class _ScoreRingPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 1
-        ..color = const Color(0xFFE2EBFD),
+        ..color = AppPalette.scoreRingOuter,
     );
     canvas.drawCircle(
       center,
@@ -556,7 +570,7 @@ class _ScoreRingPainter extends CustomPainter {
       Paint()
         ..style = PaintingStyle.stroke
         ..strokeWidth = 8
-        ..color = const Color(0xFFF1F3F8),
+        ..color = AppPalette.scoreRingTrack,
     );
 
     final sweep = math.pi * 2 * progress;
@@ -564,7 +578,7 @@ class _ScoreRingPainter extends CustomPainter {
       ..style = PaintingStyle.stroke
       ..strokeWidth = 8
       ..strokeCap = StrokeCap.round
-      ..color = const Color(0xFF2F6FEB);
+      ..color = AppPalette.scoreRingBlue;
     canvas.drawArc(circle, -math.pi / 2, sweep, false, bluePaint);
 
     final endAngle = -math.pi / 2 + sweep;
@@ -572,12 +586,12 @@ class _ScoreRingPainter extends CustomPainter {
       center.dx + math.cos(endAngle) * radius,
       center.dy + math.sin(endAngle) * radius,
     );
-    canvas.drawCircle(end, 4, Paint()..color = const Color(0xFF2F6FEB));
+    canvas.drawCircle(end, 4, Paint()..color = AppPalette.scoreRingBlue);
   }
 
   @override
   bool shouldRepaint(_ScoreRingPainter oldDelegate) {
-    return oldDelegate.progress != progress;
+    return oldDelegate.progress != progress || oldDelegate.darkMode != darkMode;
   }
 }
 
@@ -589,6 +603,7 @@ class _HealthGrid extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final textScale = MediaQuery.textScalerOf(context).scale(1);
     return GridView.count(
       physics: const NeverScrollableScrollPhysics(),
@@ -605,8 +620,8 @@ class _HealthGrid extends StatelessWidget {
         _HealthCard(
           icon: Icons.shield_outlined,
           count: summary.compromised == null ? '—' : '${summary.compromised}',
-          label: 'Comprometidas',
-          color: const Color(0xFFFF5F59),
+          label: tr('Comprometidas'),
+          color: AppPalette.resolve(const Color(0xFFFF5F59)),
           onTap: summary.compromised == null || onSelect == null
               ? null
               : () => onSelect!('compromised'),
@@ -614,22 +629,22 @@ class _HealthGrid extends StatelessWidget {
         _HealthCard(
           icon: Icons.lock_outline,
           count: '${summary.weak}',
-          label: 'Fracas',
-          color: const Color(0xFFFF8A00),
+          label: tr('Fracas'),
+          color: AppPalette.resolve(const Color(0xFFFF8A00)),
           onTap: onSelect == null ? null : () => onSelect!('weak'),
         ),
         _HealthCard(
           icon: Icons.sync,
           count: '${summary.reused}',
-          label: 'Reutilizadas',
-          color: const Color(0xFF347BFF),
+          label: tr('Reutilizadas'),
+          color: AppPalette.resolve(const Color(0xFF347BFF)),
           onTap: onSelect == null ? null : () => onSelect!('reused'),
         ),
         _HealthCard(
           icon: Icons.verified_user_outlined,
           count: '${summary.secure}',
-          label: 'Seguras',
-          color: const Color(0xFF40C27B),
+          label: tr('Seguras'),
+          color: AppPalette.resolve(const Color(0xFF40C27B)),
           onTap: onSelect == null ? null : () => onSelect!('secure'),
         ),
       ],
@@ -654,13 +669,16 @@ class _HealthCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Semantics(
       button: onTap != null,
-      label: onTap == null ? '$count $label' : '$count $label. Abrir lista.',
+      label: onTap == null
+          ? '$count $label'
+          : tx('$count $label. Abrir lista.', '$count $label. Open list.'),
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         shape: RoundedRectangleBorder(
-          side: const BorderSide(color: Color(0xFFE5EAF3)),
+          side: BorderSide(color: AppPalette.resolve(const Color(0xFFE5EAF3))),
           borderRadius: BorderRadius.circular(19),
         ),
         clipBehavior: Clip.antiAlias,
@@ -675,7 +693,7 @@ class _HealthCard extends StatelessWidget {
                 const Spacer(),
                 Text(
                   count,
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontFamily: 'Kumbh Sans',
                     fontSize: 29,
                     height: 1,
@@ -712,12 +730,13 @@ class _AccountsSection extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     if (accounts == null) {
-      return const Column(
+      return Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            'Contas',
+            tr('Contas'),
             style: TextStyle(
               fontFamily: 'Kumbh Sans',
               fontSize: 20,
@@ -726,18 +745,18 @@ class _AccountsSection extends StatelessWidget {
               color: AppColors.navy,
             ),
           ),
-          SizedBox(height: 8),
+          const SizedBox(height: 8),
           _AccountRow(
             email: 'joao@gmail.com',
-            detail: '12 serviços',
+            detail: tr('12 serviços'),
             showDivider: true,
           ),
           _AccountRow(
             email: 'joao@outlook.com',
-            detail: '8 serviços',
+            detail: tr('8 serviços'),
             showDivider: true,
           ),
-          _AccountRow(email: 'contato@empresa.com', detail: '3 serviços'),
+          _AccountRow(email: 'contato@empresa.com', detail: tr('3 serviços')),
         ],
       );
     }
@@ -745,12 +764,12 @@ class _AccountsSection extends StatelessWidget {
       return const SizedBox.shrink();
     }
     final visibleAccounts = accounts!.take(3).toList(growable: false);
-    final linkedServices = services ?? const <VaultService>[];
+    final linkedServices = services ?? <VaultService>[];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          'Contas',
+        Text(
+          tr('Contas'),
           style: TextStyle(
             fontFamily: 'Kumbh Sans',
             fontSize: 20,
@@ -763,8 +782,10 @@ class _AccountsSection extends StatelessWidget {
         for (var index = 0; index < visibleAccounts.length; index++)
           _AccountRow(
             email: visibleAccounts[index].email,
-            detail:
-                '${linkedServices.where((service) => service.email.toLowerCase() == visibleAccounts[index].email.toLowerCase()).length} serviços',
+            detail: tx(
+              '${linkedServices.where((service) => service.email.toLowerCase() == visibleAccounts[index].email.toLowerCase()).length} serviços',
+              '${linkedServices.where((service) => service.email.toLowerCase() == visibleAccounts[index].email.toLowerCase()).length} services',
+            ),
             showDivider: index < visibleAccounts.length - 1,
           ),
       ],
@@ -814,7 +835,7 @@ class _HealthSummary {
   ) {
     final services = snapshot.services;
     if (services.isEmpty) {
-      return const _HealthSummary(
+      return _HealthSummary(
         score: 0,
         label: 'Sem dados',
         color: AppColors.bodyText,
@@ -872,10 +893,10 @@ class _HealthSummary {
         ? 'Atenção'
         : 'Fraca';
     final color = score >= 80
-        ? const Color(0xFF40B878)
+        ? AppPalette.resolve(const Color(0xFF40B878))
         : score >= 50
-        ? const Color(0xFFFF8A00)
-        : const Color(0xFFE65353);
+        ? AppPalette.resolve(const Color(0xFFFF8A00))
+        : AppPalette.resolve(const Color(0xFFE65353));
     return _HealthSummary(
       score: score,
       label: label,
@@ -890,7 +911,10 @@ class _HealthSummary {
           ? 'Não foi possível verificar agora.'
           : breachCheck?.isAvailable == true
           ? 'Senhas comprometidas verificadas'
-          : 'Análise local • ${services.length} serviços',
+          : tx(
+              'Análise local • ${services.length} serviços',
+              'Local analysis • ${services.length} services',
+            ),
     );
   }
 }
@@ -908,6 +932,7 @@ class _AccountRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Column(
       children: [
         Padding(
@@ -917,7 +942,7 @@ class _AccountRow extends StatelessWidget {
               Container(
                 width: 36,
                 height: 36,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   color: AppColors.paleBlueStrong,
                   shape: BoxShape.circle,
                 ),
@@ -934,7 +959,7 @@ class _AccountRow extends StatelessWidget {
                   children: [
                     Text(
                       email,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Kumbh Sans',
                         fontSize: 16,
                         height: 1.05,
@@ -945,7 +970,7 @@ class _AccountRow extends StatelessWidget {
                     const SizedBox(height: 4),
                     Text(
                       detail,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontFamily: 'Kumbh Sans',
                         fontSize: 13,
                         height: 1,
@@ -965,7 +990,11 @@ class _AccountRow extends StatelessWidget {
           ),
         ),
         if (showDivider)
-          const Divider(height: 1, thickness: 1, color: Color(0xFFF0F2F6)),
+          Divider(
+            height: 1,
+            thickness: 1,
+            color: AppPalette.resolve(const Color(0xFFF0F2F6)),
+          ),
       ],
     );
   }
@@ -976,26 +1005,29 @@ class _HealthBottomNavigation extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Container(
       height: 78,
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        border: Border(top: BorderSide(color: Color(0xFFF1F3F8))),
+      decoration: BoxDecoration(
+        color: AppPalette.resolve(Colors.white),
+        border: Border(
+          top: BorderSide(color: AppPalette.resolve(const Color(0xFFF1F3F8))),
+        ),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          const Expanded(
+          Expanded(
             child: _BottomNavigationItem(
               icon: Icons.home_outlined,
-              label: 'Início',
+              label: tr('Início'),
               selected: true,
             ),
           ),
           Expanded(
             child: _BottomNavigationItem(
               icon: Icons.lock_outline,
-              label: 'Senhas',
+              label: tr('Senhas'),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -1008,7 +1040,7 @@ class _HealthBottomNavigation extends StatelessWidget {
           Expanded(
             child: _BottomNavigationItem(
               icon: Icons.key_outlined,
-              label: 'Gerador',
+              label: tr('Gerador'),
               onTap: () {
                 Navigator.of(context).push(
                   MaterialPageRoute<void>(
@@ -1018,10 +1050,10 @@ class _HealthBottomNavigation extends StatelessWidget {
               },
             ),
           ),
-          const Expanded(
+          Expanded(
             child: _BottomNavigationItem(
               icon: Icons.settings_outlined,
-              label: 'Ajustes',
+              label: tr('Ajustes'),
             ),
           ),
         ],
@@ -1045,7 +1077,10 @@ class _BottomNavigationItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = selected ? const Color(0xFF347BFF) : const Color(0xFF9AA3B5);
+    Theme.of(context);
+    final color = selected
+        ? AppPalette.resolve(const Color(0xFF347BFF))
+        : AppPalette.resolve(const Color(0xFF9AA3B5));
 
     return GestureDetector(
       behavior: HitTestBehavior.opaque,

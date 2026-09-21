@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
+import '../settings/app_strings.dart';
 import 'sync_protocol.dart';
 
 enum ConnectionDuration {
@@ -25,23 +26,35 @@ class DeviceGrant {
     required this.createdAt,
     required this.lastSeen,
     required this.expiresAt,
+    this.trusted = false,
+    this.lockOnFocusLoss = true,
   });
   final String id, name, secret;
   final DateTime createdAt, lastSeen;
   final DateTime? expiresAt;
+
+  /// A trusted desktop may resume the encrypted local connection on launch.
+  final bool trusted;
+
+  /// Kept per desktop so a user can allow safe multitasking when desired.
+  final bool lockOnFocusLoss;
   bool valid([DateTime? now]) =>
       expiresAt == null || (now ?? DateTime.now()).isBefore(expiresAt!);
-  DeviceGrant update({DateTime? seen, ConnectionDuration? duration}) =>
-      DeviceGrant(
-        id: id,
-        name: name,
-        secret: secret,
-        createdAt: createdAt,
-        lastSeen: seen ?? lastSeen,
-        expiresAt: duration == null
-            ? expiresAt
-            : duration.expiry(DateTime.now()),
-      );
+  DeviceGrant update({
+    DateTime? seen,
+    ConnectionDuration? duration,
+    bool? trusted,
+    bool? lockOnFocusLoss,
+  }) => DeviceGrant(
+    id: id,
+    name: name,
+    secret: secret,
+    createdAt: createdAt,
+    lastSeen: seen ?? lastSeen,
+    expiresAt: duration == null ? expiresAt : duration.expiry(DateTime.now()),
+    trusted: trusted ?? this.trusted,
+    lockOnFocusLoss: lockOnFocusLoss ?? this.lockOnFocusLoss,
+  );
   Map<String, dynamic> toJson() => {
     'id': id,
     'name': name,
@@ -49,6 +62,8 @@ class DeviceGrant {
     'created': createdAt.toUtc().toIso8601String(),
     'seen': lastSeen.toUtc().toIso8601String(),
     'expires': expiresAt?.toUtc().toIso8601String(),
+    'trusted': trusted,
+    'lockOnFocusLoss': lockOnFocusLoss,
   };
   factory DeviceGrant.fromJson(Map<String, dynamic> json) {
     final secret = safeString(json['secret']);
@@ -64,6 +79,8 @@ class DeviceGrant {
       expiresAt: json['expires'] == null
           ? null
           : DateTime.parse(safeString(json['expires'])),
+      trusted: json['trusted'] == true,
+      lockOnFocusLoss: json['lockOnFocusLoss'] != false,
     );
   }
 }
@@ -99,7 +116,7 @@ class SyncPreferences {
     }
     final data = jsonObject(raw);
     if (data['version'] != 1) {
-      throw const FormatException('Configuração de conexão incompatível.');
+      throw FormatException(tr('Configuração de conexão incompatível.'));
     }
     id = safeString(data['id']);
     autoQr = data['autoQr'] == true;

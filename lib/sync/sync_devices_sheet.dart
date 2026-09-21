@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart' hide showModalBottomSheet;
 import 'package:flutter/services.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
@@ -60,59 +62,62 @@ class SyncPanel extends StatelessWidget {
   final String title;
   final List<Widget> children;
   @override
-  Widget build(BuildContext context) => AnimatedPadding(
-    duration: const Duration(milliseconds: 180),
-    curve: Curves.easeOutCubic,
-    padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
-    child: Container(
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.sizeOf(context).height * .84,
-      ),
-      child: Material(
-        color: Colors.white,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-        clipBehavior: Clip.antiAlias,
-        child: SafeArea(
-          top: false,
-          child: SingleChildScrollView(
-            padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Center(
-                  child: Container(
-                    width: 38,
-                    height: 4,
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFE0E5EF),
-                      borderRadius: BorderRadius.circular(4),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  children: [
-                    Expanded(
-                      child: Text(
-                        title,
-                        style: const TextStyle(
-                          fontSize: 23,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.navy,
-                        ),
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => AnimatedPadding(
+      duration: const Duration(milliseconds: 180),
+      curve: Curves.easeOutCubic,
+      padding: EdgeInsets.only(bottom: MediaQuery.viewInsetsOf(context).bottom),
+      child: Container(
+        constraints: BoxConstraints(
+          maxHeight: MediaQuery.sizeOf(context).height * .84,
+        ),
+        child: Material(
+          color: AppPalette.resolve(Colors.white),
+          borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          clipBehavior: Clip.antiAlias,
+          child: SafeArea(
+            top: false,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.fromLTRB(22, 12, 22, 24),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 38,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: AppPalette.resolve(const Color(0xFFE0E5EF)),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                     ),
-                    IconButton(
-                      tooltip: 'Fechar',
-                      onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Icons.close_rounded),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                ...children,
-              ],
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            fontSize: 23,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        tooltip: tr('Fechar'),
+                        onPressed: () => Navigator.pop(context),
+                        icon: const Icon(Icons.close_rounded),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  ...children,
+                ],
+              ),
             ),
           ),
         ),
@@ -141,7 +146,7 @@ Future<bool> syncConfirm(
             ),
             TextButton(
               onPressed: () => Navigator.pop(context, false),
-              child: const Text('Cancelar'),
+              child: Text(tr('Cancelar')),
             ),
           ],
         ),
@@ -203,7 +208,7 @@ class _SyncDevicesSheetState extends State<SyncDevicesSheet> {
       await action();
     } on Object {
       if (mounted) {
-        setState(() => error = 'Não foi possível salvar esta opção.');
+        setState(() => error = tr('Não foi possível salvar esta opção.'));
       }
     } finally {
       if (mounted) setState(() => busy = false);
@@ -215,89 +220,100 @@ class _SyncDevicesSheetState extends State<SyncDevicesSheet> {
   }
 
   @override
-  Widget build(BuildContext context) => AnimatedBuilder(
-    animation: widget.sync,
-    builder: (context, _) {
-      final sync = widget.sync;
-      return SyncPanel(
-        title: 'Sincronização e dispositivos',
-        children: [
-          if (!sync.ready) Text(sync.error ?? 'Preparando conexão local…'),
-          FilledButton.icon(
-            onPressed: sync.ready && !busy
-                ? () => _next(() => ScanPairingSheet(sync: sync))
-                : null,
-            icon: const Icon(Icons.qr_code_scanner_rounded),
-            label: const Text('Ler QR Code do computador'),
-          ),
-          const SizedBox(height: 16),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Autorizar ao ler QR Code'),
-            subtitle: const Text(
-              'A leitura pelo app autoriza o computador por 1 hora.',
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => AnimatedBuilder(
+      animation: widget.sync,
+      builder: (context, _) {
+        final sync = widget.sync;
+        return SyncPanel(
+          title: tr('Sincronização e dispositivos'),
+          children: [
+            if (!sync.ready)
+              Text(sync.error ?? tr('Preparando conexão local…')),
+            FilledButton.icon(
+              onPressed: sync.ready && !busy
+                  ? () => _next(() => ScanPairingSheet(sync: sync))
+                  : null,
+              icon: const Icon(Icons.qr_code_scanner_rounded),
+              label: Text(tr('Ler QR Code do computador')),
             ),
-            value: sync.preferences.autoQr,
-            onChanged: busy || !sync.ready
-                ? null
-                : (v) => _save(() => sync.setAutoQr(v)),
-          ),
-          const Divider(color: Color(0xFFE9EDF5)),
-          SwitchListTile.adaptive(
-            contentPadding: EdgeInsets.zero,
-            title: const Text('Receber pedidos em segundo plano'),
-            subtitle: const Text(
-              'Mantém uma notificação ativa. Não funciona se o Android forçar a parada do app.',
-            ),
-            value: sync.background,
-            onChanged: busy || !sync.ready
-                ? null
-                : (v) => _save(() => sync.setBackground(v)),
-          ),
-          const SizedBox(height: 20),
-          const Text(
-            'Dispositivos',
-            style: TextStyle(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.navy,
-            ),
-          ),
-          if (sync.preferences.devices.isEmpty)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Text('Nenhum computador autorizado.'),
-            ),
-          for (final g in sync.preferences.devices.values) ...[
-            ListTile(
+            const SizedBox(height: 16),
+            SwitchListTile.adaptive(
               contentPadding: EdgeInsets.zero,
-              leading: const Icon(
-                Icons.computer_rounded,
-                color: AppColors.blue,
-              ),
-              title: Text(g.name),
+              title: Text(tr('Autorizar ao ler QR Code')),
               subtitle: Text(
-                '${sync.links.containsKey(g.id) ? 'Conectado' : 'Desconectado'} • Windows\n${g.expiresAt == null ? 'Sem prazo de expiração' : 'Até ${_date(g.expiresAt!)}'}',
+                tr('A leitura pelo app autoriza o computador por 1 hora.'),
               ),
-              trailing: const Icon(Icons.chevron_right_rounded),
-              onTap: () =>
-                  _next(() => DeviceOptionsSheet(sync: sync, id: g.id)),
+              value: sync.preferences.autoQr,
+              onChanged: busy || !sync.ready
+                  ? null
+                  : (v) => _save(() => sync.setAutoQr(v)),
             ),
-            const Divider(color: Color(0xFFE9EDF5)),
+            Divider(color: AppPalette.resolve(_syncFieldBorder)),
+            SwitchListTile.adaptive(
+              contentPadding: EdgeInsets.zero,
+              title: Text(tr('Receber pedidos em segundo plano')),
+              subtitle: Text(
+                tr(
+                  'Mantém uma notificação ativa. Não funciona se o Android forçar a parada do app.',
+                ),
+              ),
+              value: sync.background,
+              onChanged: busy || !sync.ready
+                  ? null
+                  : (v) => _save(() => sync.setBackground(v)),
+            ),
+            const SizedBox(height: 20),
+            Text(
+              tr('Dispositivos'),
+              style: TextStyle(
+                fontSize: 20,
+                fontWeight: FontWeight.w700,
+                color: AppColors.navy,
+              ),
+            ),
+            if (sync.preferences.devices.isEmpty)
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                child: Text(tr('Nenhum computador autorizado.')),
+              ),
+            for (final g in sync.preferences.devices.values) ...[
+              ListTile(
+                contentPadding: EdgeInsets.zero,
+                leading: const Icon(
+                  Icons.computer_rounded,
+                  color: AppColors.blue,
+                ),
+                title: Text(g.name),
+                subtitle: Text(
+                  '${sync.links.containsKey(g.id) ? tr('Conectado') : tr('Desconectado')} • Windows\n${g.expiresAt == null ? tr('Sem prazo de expiração') : 'Até ${_date(g.expiresAt!)}'}',
+                ),
+                trailing: const Icon(Icons.chevron_right_rounded),
+                onTap: () =>
+                    _next(() => DeviceOptionsSheet(sync: sync, id: g.id)),
+              ),
+              Divider(color: AppPalette.resolve(_syncFieldBorder)),
+            ],
+            const SizedBox(height: 12),
+            Text(
+              tr(
+                'Bloquear o cofre encerra as autorizações. “Para sempre” não impede bloqueio ou revogação.',
+              ),
+              style: TextStyle(color: AppColors.bodyText, fontSize: 14),
+            ),
+            if (error != null)
+              Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  error!,
+                  style: TextStyle(color: AppPalette.resolve(Colors.red)),
+                ),
+              ),
           ],
-          const SizedBox(height: 12),
-          const Text(
-            'Bloquear o cofre encerra as autorizações. “Para sempre” não impede bloqueio ou revogação.',
-            style: TextStyle(color: AppColors.bodyText, fontSize: 14),
-          ),
-          if (error != null)
-            Padding(
-              padding: const EdgeInsets.only(top: 12),
-              child: Text(error!, style: const TextStyle(color: Colors.red)),
-            ),
-        ],
-      );
-    },
+        );
+      },
+    ),
   );
 }
 
@@ -317,6 +333,24 @@ class DeviceOptionsSheet extends StatefulWidget {
 class _DeviceOptionsSheetState extends State<DeviceOptionsSheet> {
   String? error;
   bool busy = false;
+
+  Future<void> _saveOption(Future<void> Function() action) async {
+    if (busy) return;
+    setState(() {
+      busy = true;
+      error = null;
+    });
+    try {
+      await action();
+    } on Object {
+      if (mounted) {
+        setState(() => error = tr('Não foi possível salvar esta opção.'));
+      }
+    } finally {
+      if (mounted) setState(() => busy = false);
+    }
+  }
+
   Future<void> _change({
     ConnectionDuration? duration,
     bool revoke = false,
@@ -329,10 +363,14 @@ class _DeviceOptionsSheetState extends State<DeviceOptionsSheet> {
           (!revoke && duration != ConnectionDuration.forever) ||
           await syncConfirm(
             parent,
-            revoke ? 'Desconectar dispositivo?' : 'Autorizar sem prazo?',
             revoke
-                ? 'Será necessário parear novamente para acessar o cofre.'
-                : 'Este computador poderá reconectar até você bloquear o cofre ou revogar o acesso.',
+                ? tr('Desconectar dispositivo?')
+                : tr('Autorizar sem prazo?'),
+            revoke
+                ? tr('Será necessário parear novamente para acessar o cofre.')
+                : tr(
+                    'Este computador poderá reconectar até você bloquear o cofre ou revogar o acesso.',
+                  ),
           );
       if (!confirmed || !sync.ready) return;
       try {
@@ -345,9 +383,9 @@ class _DeviceOptionsSheetState extends State<DeviceOptionsSheet> {
         if (parent.mounted) {
           await syncSheet<void>(
             parent,
-            const SyncPanel(
-              title: 'Não foi possível salvar',
-              children: [Text('Confira a conexão e tente novamente.')],
+            SyncPanel(
+              title: tr('Não foi possível salvar'),
+              children: [Text(tr('Confira a conexão e tente novamente.'))],
             ),
           );
         }
@@ -357,30 +395,65 @@ class _DeviceOptionsSheetState extends State<DeviceOptionsSheet> {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     final g = widget.sync.preferences.devices[widget.id];
     return SyncPanel(
-      title: g?.name ?? 'Dispositivo',
+      title: g?.name ?? tr('Dispositivo'),
       children: [
         if (g != null) ...[
           Text(
             'Windows • Vinculado em ${_date(g.createdAt)}\nÚltima conexão: ${_date(g.lastSeen)}',
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 15,
               color: AppColors.bodyText,
               height: 1.5,
             ),
           ),
           const SizedBox(height: 20),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: Text(tr('Confiar neste computador')),
+            subtitle: Text(
+              tr(
+                'Reconecta automaticamente ao abrir o PassDrive no Windows, sem QR Code ou código.',
+              ),
+            ),
+            value: g.trusted,
+            onChanged: busy
+                ? null
+                : (value) => _saveOption(
+                    () => widget.sync.setTrusted(widget.id, value),
+                  ),
+          ),
+          Divider(color: AppPalette.resolve(_syncFieldBorder)),
+          SwitchListTile.adaptive(
+            contentPadding: EdgeInsets.zero,
+            title: Text(tr('Bloquear ao perder o foco')),
+            subtitle: Text(
+              tr(
+                'Encerra a sessão deste computador ao trocar para outro app ou janela.',
+              ),
+            ),
+            value: g.lockOnFocusLoss,
+            onChanged: busy
+                ? null
+                : (value) => _saveOption(
+                    () => widget.sync.setLockOnFocusLoss(widget.id, value),
+                  ),
+          ),
+          const SizedBox(height: 12),
           DropdownButtonFormField<ConnectionDuration>(
             isExpanded: true,
-            decoration: const InputDecoration(
-              labelText: 'Permitir reconexão por',
+            decoration: InputDecoration(
+              labelText: tr('Permitir reconexão por'),
             ),
             hint: Text(
-              g.expiresAt == null ? 'Para sempre' : 'Escolher duração',
+              g.expiresAt == null ? tr('Para sempre') : tr('Escolher duração'),
             ),
             items: ConnectionDuration.values
-                .map((v) => DropdownMenuItem(value: v, child: Text(v.label)))
+                .map(
+                  (v) => DropdownMenuItem(value: v, child: Text(tr(v.label))),
+                )
                 .toList(),
             onChanged: (v) {
               if (v != null) _change(duration: v);
@@ -390,8 +463,15 @@ class _DeviceOptionsSheetState extends State<DeviceOptionsSheet> {
           TextButton.icon(
             onPressed: () => _change(revoke: true),
             icon: const Icon(Icons.link_off_rounded),
-            label: const Text('Revogar acesso'),
+            label: Text(tr('Revogar acesso')),
           ),
+          if (error != null) ...[
+            const SizedBox(height: 8),
+            Text(
+              error!,
+              style: TextStyle(color: AppPalette.resolve(Colors.red)),
+            ),
+          ],
         ],
       ],
     );
@@ -463,7 +543,9 @@ class _PairingApprovalSheetState extends State<PairingApprovalSheet> {
   Future<void> _approve() async {
     if (busy) return;
     if (widget.qrSecret == null && _enteredCode.length != 3) {
-      setState(() => error = 'Digite os 3 caracteres exibidos no computador.');
+      setState(
+        () => error = tr('Digite os 3 caracteres exibidos no computador.'),
+      );
       return;
     }
     setState(() {
@@ -483,173 +565,189 @@ class _PairingApprovalSheetState extends State<PairingApprovalSheet> {
       if (mounted) {
         setState(() {
           busy = false;
-          error =
-              'Não foi possível autorizar. Confira o código, a rede e o prazo de 2 minutos. Após 3 tentativas, gere outro código no computador.';
+          error = tr(
+            'Não foi possível autorizar. Confira o código, a rede e o prazo de 2 minutos. Após 3 tentativas, gere outro código no computador.',
+          );
         });
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) => SyncPanel(
-    title: 'Autorizar computador',
-    children: [
-      Text(
-        widget.peer.name,
-        style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
-      ),
-      const SizedBox(height: 12),
-      const Text(
-        'Este dispositivo poderá exibir e copiar as senhas enquanto o celular estiver conectado e desbloqueado.',
-      ),
-      const SizedBox(height: 20),
-      if (widget.qrSecret == null)
-        Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            const Text(
-              'Código do computador',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.w600,
-                color: AppColors.navy,
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => SyncPanel(
+      title: tr('Autorizar computador'),
+      children: [
+        Text(
+          widget.peer.name,
+          style: const TextStyle(fontSize: 20, fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          tr(
+            'Este dispositivo poderá exibir e copiar as senhas enquanto o celular estiver conectado e desbloqueado.',
+          ),
+        ),
+        const SizedBox(height: 20),
+        if (widget.qrSecret == null)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Text(
+                tr('Código do computador'),
+                style: TextStyle(
+                  fontSize: 16,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.navy,
+                ),
               ),
-            ),
-            const SizedBox(height: 6),
-            const Text(
-              'Use os caracteres exibidos no computador.',
-              style: TextStyle(fontSize: 14, color: AppColors.bodyText),
-            ),
-            const SizedBox(height: 14),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                for (var index = 0; index < code.length; index++) ...[
-                  if (index > 0) const SizedBox(width: 12),
-                  Semantics(
-                    label: 'Caractere ${index + 1} de 3',
-                    child: SizedBox(
-                      width: 58,
-                      height: 62,
-                      child: TextField(
-                        controller: code[index],
-                        focusNode: codeFocus[index],
-                        enabled: !busy,
-                        textAlign: TextAlign.center,
-                        textCapitalization: TextCapitalization.characters,
-                        textInputAction: index == code.length - 1
-                            ? TextInputAction.done
-                            : TextInputAction.next,
-                        inputFormatters: [
-                          FilteringTextInputFormatter.allow(
-                            RegExp('[a-zA-Z0-9]'),
+              const SizedBox(height: 6),
+              Text(
+                tr('Use os caracteres exibidos no computador.'),
+                style: TextStyle(fontSize: 14, color: AppColors.bodyText),
+              ),
+              const SizedBox(height: 14),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  for (var index = 0; index < code.length; index++) ...[
+                    if (index > 0) const SizedBox(width: 12),
+                    Semantics(
+                      label: tx(
+                        'Caractere ${index + 1} de 3',
+                        'Character ${index + 1} of 3',
+                      ),
+                      child: SizedBox(
+                        width: 58,
+                        height: 62,
+                        child: TextField(
+                          controller: code[index],
+                          focusNode: codeFocus[index],
+                          enabled: !busy,
+                          textAlign: TextAlign.center,
+                          textCapitalization: TextCapitalization.characters,
+                          textInputAction: index == code.length - 1
+                              ? TextInputAction.done
+                              : TextInputAction.next,
+                          inputFormatters: [
+                            FilteringTextInputFormatter.allow(
+                              RegExp('[a-zA-Z0-9]'),
+                            ),
+                          ],
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.navy,
                           ),
-                        ],
-                        style: const TextStyle(
-                          fontSize: 25,
-                          fontWeight: FontWeight.w700,
-                          color: AppColors.navy,
+                          decoration: InputDecoration(
+                            counterText: '',
+                            filled: true,
+                            fillColor: AppPalette.resolve(
+                              const Color(0xFFF7F9FD),
+                            ),
+                            contentPadding: EdgeInsets.zero,
+                            border: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(
+                                color: _syncFieldBorder,
+                              ),
+                            ),
+                            enabledBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(
+                                color: _syncFieldBorder,
+                              ),
+                            ),
+                            focusedBorder: OutlineInputBorder(
+                              borderRadius: BorderRadius.circular(15),
+                              borderSide: const BorderSide(
+                                color: AppColors.blue,
+                                width: 2,
+                              ),
+                            ),
+                          ),
+                          onChanged: (value) => _onCodeChanged(index, value),
                         ),
-                        decoration: InputDecoration(
-                          counterText: '',
-                          filled: true,
-                          fillColor: const Color(0xFFF7F9FD),
-                          contentPadding: EdgeInsets.zero,
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: _syncFieldBorder,
-                            ),
-                          ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: _syncFieldBorder,
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(15),
-                            borderSide: const BorderSide(
-                              color: AppColors.blue,
-                              width: 2,
-                            ),
-                          ),
-                        ),
-                        onChanged: (value) => _onCodeChanged(index, value),
                       ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
-            ),
-          ],
-        ),
-      const SizedBox(height: 16),
-      DropdownButtonFormField<ConnectionDuration>(
-        initialValue: duration,
-        isExpanded: true,
-        borderRadius: BorderRadius.circular(16),
-        icon: const Icon(Icons.keyboard_arrow_down_rounded),
-        dropdownColor: Colors.white,
-        style: const TextStyle(
-          fontSize: 16,
-          fontWeight: FontWeight.w500,
-          color: AppColors.navy,
-        ),
-        decoration: InputDecoration(
-          labelText: 'Permitir reconexão por',
-          prefixIcon: const Icon(Icons.schedule_rounded),
-          filled: true,
-          fillColor: const Color(0xFFF7F9FD),
-          contentPadding: const EdgeInsets.symmetric(
-            horizontal: 16,
-            vertical: 15,
-          ),
-          border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _syncFieldBorder),
-          ),
-          enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: _syncFieldBorder),
-          ),
-          focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(16),
-            borderSide: const BorderSide(color: AppColors.blue, width: 1.5),
-          ),
-        ),
-        items: ConnectionDuration.values
-            .where((v) => v != ConnectionDuration.forever)
-            .map(
-              (v) => DropdownMenuItem(
-                value: v,
-                child: Text(v.label, overflow: TextOverflow.ellipsis),
               ),
-            )
-            .toList(),
-        onChanged: busy ? null : (v) => setState(() => duration = v!),
-      ),
-      const SizedBox(height: 12),
-      const Text(
-        'Você pode autorizar sem prazo depois, nas opções do dispositivo.',
-        style: TextStyle(fontSize: 14, color: AppColors.bodyText),
-      ),
-      if (error != null)
-        Padding(
-          padding: const EdgeInsets.only(top: 16),
-          child: Text(error!, style: const TextStyle(color: Colors.red)),
-        ),
-      const SizedBox(height: 22),
-      FilledButton(
-        onPressed: busy ? null : _approve,
-        child: busy
-            ? const SizedBox.square(
-                dimension: 20,
-                child: CircularProgressIndicator(strokeWidth: 2),
+            ],
+          ),
+        const SizedBox(height: 16),
+        DropdownButtonFormField<ConnectionDuration>(
+          initialValue: duration,
+          isExpanded: true,
+          borderRadius: BorderRadius.circular(16),
+          icon: const Icon(Icons.keyboard_arrow_down_rounded),
+          dropdownColor: AppPalette.resolve(Colors.white),
+          style: TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+            color: AppColors.navy,
+          ),
+          decoration: InputDecoration(
+            labelText: tr('Permitir reconexão por'),
+            prefixIcon: const Icon(Icons.schedule_rounded),
+            filled: true,
+            fillColor: AppPalette.resolve(const Color(0xFFF7F9FD)),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 15,
+            ),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: _syncFieldBorder),
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: _syncFieldBorder),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(16),
+              borderSide: const BorderSide(color: AppColors.blue, width: 1.5),
+            ),
+          ),
+          items: ConnectionDuration.values
+              .where((v) => v != ConnectionDuration.forever)
+              .map(
+                (v) => DropdownMenuItem(
+                  value: v,
+                  child: Text(tr(v.label), overflow: TextOverflow.ellipsis),
+                ),
               )
-            : const Text('Autorizar conexão'),
-      ),
-    ],
+              .toList(),
+          onChanged: busy ? null : (v) => setState(() => duration = v!),
+        ),
+        const SizedBox(height: 12),
+        Text(
+          tr(
+            'Você pode autorizar sem prazo depois, nas opções do dispositivo.',
+          ),
+          style: TextStyle(fontSize: 14, color: AppColors.bodyText),
+        ),
+        if (error != null)
+          Padding(
+            padding: const EdgeInsets.only(top: 16),
+            child: Text(
+              error!,
+              style: TextStyle(color: AppPalette.resolve(Colors.red)),
+            ),
+          ),
+        const SizedBox(height: 22),
+        FilledButton(
+          onPressed: busy ? null : _approve,
+          child: busy
+              ? const SizedBox.square(
+                  dimension: 20,
+                  child: CircularProgressIndicator(strokeWidth: 2),
+                )
+              : Text(tr('Autorizar conexão')),
+        ),
+      ],
+    ),
   );
 }
 
@@ -714,46 +812,52 @@ class _ScanPairingSheetState extends State<ScanPairingSheet> {
     } on Object {
       if (mounted) {
         setState(() {
-          error =
-              'QR Code inválido, expirado ou computador fora da rede. Confira e tente novamente.';
+          error = tr(
+            'QR Code inválido, expirado ou computador fora da rede. Confira e tente novamente.',
+          );
         });
       }
     }
   }
 
   @override
-  Widget build(BuildContext context) => SyncPanel(
-    title: 'Ler QR Code',
-    children: [
-      ClipRRect(
-        borderRadius: BorderRadius.circular(16),
-        child: SizedBox(
-          height: 280,
-          child: MobileScanner(
-            controller: scanner,
-            onDetect: _scan,
-            errorBuilder: (_, _) => const Center(
-              child: Text('Permita o acesso à câmera para ler o QR Code.'),
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => SyncPanel(
+      title: tr('Ler QR Code'),
+      children: [
+        ClipRRect(
+          borderRadius: BorderRadius.circular(16),
+          child: SizedBox(
+            height: 280,
+            child: MobileScanner(
+              controller: scanner,
+              onDetect: _scan,
+              errorBuilder: (_, _) => Center(
+                child: Text(
+                  tr('Permita o acesso à câmera para ler o QR Code.'),
+                ),
+              ),
             ),
           ),
         ),
-      ),
-      const SizedBox(height: 16),
-      const Text('Aponte para o QR Code exibido pelo PassDrive no computador.'),
-      if (error != null) ...[
-        const SizedBox(height: 12),
-        Text(error!, style: const TextStyle(color: Colors.red)),
-        TextButton(
-          onPressed: () {
-            setState(() {
-              busy = false;
-              error = null;
-            });
-            scanner.start();
-          },
-          child: const Text('Tentar novamente'),
-        ),
+        const SizedBox(height: 16),
+        Text(tr('Aponte para o QR Code exibido pelo PassDrive no computador.')),
+        if (error != null) ...[
+          const SizedBox(height: 12),
+          Text(error!, style: TextStyle(color: AppPalette.resolve(Colors.red))),
+          TextButton(
+            onPressed: () {
+              setState(() {
+                busy = false;
+                error = null;
+              });
+              scanner.start();
+            },
+            child: Text(tr('Tentar novamente')),
+          ),
+        ],
       ],
-    ],
+    ),
   );
 }

@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -91,7 +93,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
       _lifecycleLocking = false;
       return;
     }
-    if (!sync.connected || _lifecycleLocking) return;
+    if (!sync.connected || !sync.lockOnFocusLoss || _lifecycleLocking) return;
 
     if (state == AppLifecycleState.inactive) {
       _lockForLifecycle();
@@ -114,7 +116,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
     unawaited(
       sync.disconnect(
         forget: true,
-        message: 'Sessão encerrada. Sincronize novamente.',
+        message: tr('Sessão encerrada. Sincronize novamente.'),
       ),
     );
   }
@@ -122,11 +124,11 @@ class _DesktopClientPageState extends State<DesktopClientPage>
   Future<void> _request(RemoteAction action) async {
     if (!sync.connected) return;
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
+      SnackBar(
         content: Text(
-          'Continue pelo celular para autorizar e preencher os dados.',
+          tr('Continue pelo celular para autorizar e preencher os dados.'),
         ),
-        duration: Duration(seconds: 5),
+        duration: const Duration(seconds: 5),
       ),
     );
     final result = await sync.request(action);
@@ -146,7 +148,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
     unawaited(
       sync.disconnect(
         forget: true,
-        message: 'Cofre bloqueado. Sincronize novamente.',
+        message: tr('Cofre bloqueado. Sincronize novamente.'),
       ),
     );
   }
@@ -180,67 +182,70 @@ class _DesktopClientPageState extends State<DesktopClientPage>
   }
 
   @override
-  Widget build(BuildContext context) => CallbackShortcuts(
-    bindings: {
-      const SingleActivator(LogicalKeyboardKey.digit1, control: true): () =>
-          _select(0),
-      const SingleActivator(LogicalKeyboardKey.digit2, control: true): () =>
-          _select(1),
-      const SingleActivator(LogicalKeyboardKey.digit3, control: true): () =>
-          _select(2),
-      const SingleActivator(LogicalKeyboardKey.keyR, control: true): () =>
-          sync.refresh(),
-      const SingleActivator(LogicalKeyboardKey.keyL, control: true): _lock,
-    },
-    child: Focus(
-      autofocus: true,
-      child: Scaffold(
-        backgroundColor: desktopBackground,
-        body: sync.connected
-            ? Row(
-                children: [
-                  DesktopSidebar(
-                    viewer: true,
-                    selectedIndex: index,
-                    onSelected: _select,
-                    onLock: _lock,
-                  ),
-                  Expanded(
-                    child: IndexedStack(
-                      index: index,
-                      children: [
-                        TickerMode(
-                          enabled: index == 0,
-                          child: PasswordHealthPage(
-                            showBottomNavigation: false,
-                            remoteSnapshot: sync.snapshot,
-                            onOpenPasswords: (value) => setState(() {
-                              filter = value;
-                              index = 1;
-                            }),
-                          ),
-                        ),
-                        TickerMode(
-                          enabled: index == 1,
-                          child: PasswordsPage(
-                            showBottomNavigation: false,
-                            remoteSnapshot: sync.snapshot,
-                            healthFilter: filter,
-                            onRemoteAction: _request,
-                          ),
-                        ),
-                        TickerMode(
-                          enabled: index == 2,
-                          child: const PasswordGeneratorPage(
-                            showBottomNavigation: false,
-                          ),
-                        ),
-                      ],
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => CallbackShortcuts(
+      bindings: {
+        const SingleActivator(LogicalKeyboardKey.digit1, control: true): () =>
+            _select(0),
+        const SingleActivator(LogicalKeyboardKey.digit2, control: true): () =>
+            _select(1),
+        const SingleActivator(LogicalKeyboardKey.digit3, control: true): () =>
+            _select(2),
+        const SingleActivator(LogicalKeyboardKey.keyR, control: true): () =>
+            sync.refresh(),
+        const SingleActivator(LogicalKeyboardKey.keyL, control: true): _lock,
+      },
+      child: Focus(
+        autofocus: true,
+        child: Scaffold(
+          backgroundColor: desktopBackground,
+          body: sync.connected
+              ? Row(
+                  children: [
+                    DesktopSidebar(
+                      viewer: true,
+                      selectedIndex: index,
+                      onSelected: _select,
+                      onLock: _lock,
                     ),
-                  ),
-                ],
-              )
-            : _connection(context),
+                    Expanded(
+                      child: IndexedStack(
+                        index: index,
+                        children: [
+                          TickerMode(
+                            enabled: index == 0,
+                            child: PasswordHealthPage(
+                              showBottomNavigation: false,
+                              remoteSnapshot: sync.snapshot,
+                              onOpenPasswords: (value) => setState(() {
+                                filter = value;
+                                index = 1;
+                              }),
+                            ),
+                          ),
+                          TickerMode(
+                            enabled: index == 1,
+                            child: PasswordsPage(
+                              showBottomNavigation: false,
+                              remoteSnapshot: sync.snapshot,
+                              healthFilter: filter,
+                              onRemoteAction: _request,
+                            ),
+                          ),
+                          TickerMode(
+                            enabled: index == 2,
+                            child: const PasswordGeneratorPage(
+                              showBottomNavigation: false,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                )
+              : _connection(context),
+        ),
       ),
     ),
   );
@@ -253,8 +258,8 @@ class _DesktopClientPageState extends State<DesktopClientPage>
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            const Text(
-              'Conectar ao celular',
+            Text(
+              tr('Conectar ao celular'),
               style: TextStyle(
                 fontSize: 32,
                 fontWeight: FontWeight.w700,
@@ -262,8 +267,10 @@ class _DesktopClientPageState extends State<DesktopClientPage>
               ),
             ),
             const SizedBox(height: 12),
-            const Text(
-              'Abra Sincronização e dispositivos nos ajustes do PassDrive. Os dois aparelhos precisam estar na mesma rede.',
+            Text(
+              tr(
+                'Abra Sincronização e dispositivos nos ajustes do PassDrive. Os dois aparelhos precisam estar na mesma rede.',
+              ),
               style: TextStyle(fontSize: 16, color: desktopMuted),
             ),
             const SizedBox(height: 28),
@@ -286,13 +293,15 @@ class _DesktopClientPageState extends State<DesktopClientPage>
                       ),
                     ),
                     const SizedBox(height: 10),
-                    const Text(
-                      'Desbloqueie o cofre no celular para retomar a conexão. Nenhuma senha fica salva neste computador.',
+                    Text(
+                      tr(
+                        'Desbloqueie o cofre no celular para retomar a conexão. Nenhuma senha fica salva neste computador.',
+                      ),
                     ),
                     const SizedBox(height: 20),
                     TextButton(
                       onPressed: _lock,
-                      child: const Text('Conectar outro dispositivo'),
+                      child: Text(tr('Conectar outro dispositivo')),
                     ),
                   ],
                 ),
@@ -305,9 +314,9 @@ class _DesktopClientPageState extends State<DesktopClientPage>
                       mainAxisSize: MainAxisSize.min,
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
-                        const Text(
-                          'Escaneie o QR Code',
-                          style: TextStyle(
+                        Text(
+                          tr('Escaneie o QR Code'),
+                          style: const TextStyle(
                             fontSize: 21,
                             fontWeight: FontWeight.w700,
                           ),
@@ -315,7 +324,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
                         const SizedBox(height: 18),
                         if (sync.ticket?.valid() == true)
                           Semantics(
-                            label: 'QR Code de pareamento temporário',
+                            label: tr('QR Code de pareamento temporário'),
                             child: ClipRRect(
                               borderRadius: BorderRadius.circular(16),
                               child: Stack(
@@ -356,13 +365,15 @@ class _DesktopClientPageState extends State<DesktopClientPage>
                             ),
                           )
                         else
-                          const SizedBox(
+                          SizedBox(
                             height: 208,
-                            child: Center(child: Text('QR Code expirado')),
+                            child: Center(child: Text(tr('QR Code expirado'))),
                           ),
                         const SizedBox(height: 12),
-                        const Text(
-                          'Use o app PassDrive no celular para ler o código.',
+                        Text(
+                          tr(
+                            'Use o app PassDrive no celular para ler o código.',
+                          ),
                           textAlign: TextAlign.center,
                         ),
                         const SizedBox(height: 14),
@@ -391,8 +402,10 @@ class _DesktopClientPageState extends State<DesktopClientPage>
             const SizedBox(height: 18),
             _waitingStatus(sync),
             const SizedBox(height: 10),
-            const Text(
-              'O celular autoriza o acesso. O computador apenas exibe o cofre durante a conexão.',
+            Text(
+              tr(
+                'O celular autoriza o acesso. O computador apenas exibe o cofre durante a conexão.',
+              ),
               style: TextStyle(fontSize: 14, color: desktopMuted),
             ),
           ],
@@ -404,7 +417,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
     width: double.infinity,
     padding: const EdgeInsets.all(24),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppPalette.resolve(Colors.white),
       borderRadius: BorderRadius.circular(20),
       border: Border.all(color: desktopLine),
     ),
@@ -440,9 +453,9 @@ class _DesktopClientPageState extends State<DesktopClientPage>
                 ],
               )
             : sync.error != null
-            ? const _DeviceSearchError(
-                key: ValueKey('searching-error'),
-                message: 'Confira a rede local e tente novamente.',
+            ? _DeviceSearchError(
+                key: const ValueKey('searching-error'),
+                message: tr('Confira a rede local e tente novamente.'),
               )
             : sync.searching
             ? const _DeviceSearchPlaceholder(
@@ -456,8 +469,8 @@ class _DesktopClientPageState extends State<DesktopClientPage>
   Widget _detectDeviceAction(DesktopSync sync) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text(
-        'Ou detectar automaticamente',
+      Text(
+        tr('Ou detectar automaticamente'),
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
@@ -465,8 +478,8 @@ class _DesktopClientPageState extends State<DesktopClientPage>
         ),
       ),
       const SizedBox(height: 8),
-      const Text(
-        'Encontre o celular na rede e confirme o código por lá.',
+      Text(
+        tr('Encontre o celular na rede e confirme o código por lá.'),
         style: TextStyle(color: desktopMuted),
       ),
       const SizedBox(height: 18),
@@ -480,10 +493,10 @@ class _DesktopClientPageState extends State<DesktopClientPage>
         icon: const Icon(Icons.radar_rounded),
         label: Text(
           sync.searching
-              ? 'Procurando celular…'
+              ? tr('Procurando celular…')
               : sync.error != null
-              ? 'Tentar novamente'
-              : 'Procurar celular',
+              ? tr('Tentar novamente')
+              : tr('Procurar celular'),
         ),
       ),
     ],
@@ -492,8 +505,8 @@ class _DesktopClientPageState extends State<DesktopClientPage>
   Widget _manualCodeView(DesktopSync sync) => Column(
     crossAxisAlignment: CrossAxisAlignment.stretch,
     children: [
-      const Text(
-        'Detectar dispositivo',
+      Text(
+        tr('Detectar dispositivo'),
         style: TextStyle(
           fontSize: 18,
           fontWeight: FontWeight.w700,
@@ -501,7 +514,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
         ),
       ),
       const SizedBox(height: 16),
-      const Text('Digite no celular o código abaixo:'),
+      Text(tr('Digite no celular o código abaixo:')),
       const SizedBox(height: 18),
       Center(
         child: SelectableText(
@@ -515,7 +528,7 @@ class _DesktopClientPageState extends State<DesktopClientPage>
         ),
       ),
       const SizedBox(height: 16),
-      const Text('Expira em 2 minutos. Cada código aceita até 3 tentativas.'),
+      Text(tr('Expira em 2 minutos. Cada código aceita até 3 tentativas.')),
     ],
   );
 
@@ -523,23 +536,23 @@ class _DesktopClientPageState extends State<DesktopClientPage>
     width: double.infinity,
     padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
     decoration: BoxDecoration(
-      color: Colors.white,
+      color: AppPalette.resolve(Colors.white),
       borderRadius: BorderRadius.circular(16),
       border: Border.all(color: desktopLine),
     ),
-    child: const Row(
+    child: Row(
       children: [
-        SizedBox.square(
+        const SizedBox.square(
           dimension: 19,
           child: CircularProgressIndicator(
             strokeWidth: 2.2,
             color: AppColors.blue,
           ),
         ),
-        SizedBox(width: 12),
+        const SizedBox(width: 12),
         Expanded(
           child: Text(
-            'Aguardando sincronização',
+            tr('Aguardando sincronização'),
             style: TextStyle(
               fontSize: 15,
               fontWeight: FontWeight.w500,
@@ -558,52 +571,55 @@ class _DeviceSearchError extends StatelessWidget {
   final String message;
 
   @override
-  Widget build(BuildContext context) => SizedBox(
-    height: _deviceSearchCardHeight(context),
-    child: Container(
-      padding: const EdgeInsets.symmetric(horizontal: 14),
-      decoration: BoxDecoration(
-        color: const Color(0xFFFFF1F1),
-        borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: const Color(0xFFF5D0D0)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 38,
-            height: 38,
-            decoration: const BoxDecoration(
-              color: Color(0xFFFFE1E1),
-              shape: BoxShape.circle,
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => SizedBox(
+      height: _deviceSearchCardHeight(context),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14),
+        decoration: BoxDecoration(
+          color: desktopErrorSurface,
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(color: desktopErrorBorder),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 38,
+              height: 38,
+              decoration: BoxDecoration(
+                color: desktopErrorIconFill,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Icons.error_outline_rounded,
+                color: AppColors.weak,
+                size: 20,
+              ),
             ),
-            child: const Icon(
-              Icons.error_outline_rounded,
-              color: AppColors.weak,
-              size: 20,
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Nenhum dispositivo encontrado',
-                  style: TextStyle(
-                    color: AppColors.weak,
-                    fontWeight: FontWeight.w600,
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    tr('Nenhum dispositivo encontrado'),
+                    style: const TextStyle(
+                      color: AppColors.weak,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  message,
-                  style: const TextStyle(fontSize: 13, color: AppColors.weak),
-                ),
-              ],
+                  const SizedBox(height: 3),
+                  Text(
+                    message,
+                    style: const TextStyle(fontSize: 13, color: AppColors.weak),
+                  ),
+                ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     ),
   );
@@ -613,23 +629,29 @@ class _QrPairingSteps extends StatelessWidget {
   const _QrPairingSteps();
 
   @override
-  Widget build(BuildContext context) => ConstrainedBox(
-    constraints: const BoxConstraints(maxWidth: 360),
-    child: const Column(
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        _QrPairingStep(
-          number: '1',
-          text: 'Acesse a aba ajustes > Sincronização > Ler QR CODE',
-        ),
-        SizedBox(height: 8),
-        _QrPairingStep(
-          number: '2',
-          text: 'Aponte a câmera para o QR CODE exibido',
-        ),
-        SizedBox(height: 8),
-        _QrPairingStep(number: '3', text: 'Confirme e configure o dispositivo'),
-      ],
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => ConstrainedBox(
+      constraints: const BoxConstraints(maxWidth: 360),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          _QrPairingStep(
+            number: '1',
+            text: tr('Acesse a aba ajustes > Sincronização > Ler QR CODE'),
+          ),
+          const SizedBox(height: 8),
+          _QrPairingStep(
+            number: '2',
+            text: tr('Aponte a câmera para o QR CODE exibido'),
+          ),
+          const SizedBox(height: 8),
+          _QrPairingStep(
+            number: '3',
+            text: tr('Confirme e configure o dispositivo'),
+          ),
+        ],
+      ),
     ),
   );
 }
@@ -641,40 +663,43 @@ class _QrPairingStep extends StatelessWidget {
   final String text;
 
   @override
-  Widget build(BuildContext context) => Row(
-    crossAxisAlignment: CrossAxisAlignment.start,
-    children: [
-      Container(
-        width: 22,
-        height: 22,
-        alignment: Alignment.center,
-        decoration: const BoxDecoration(
-          color: Color(0xFFE8F0FF),
-          shape: BoxShape.circle,
-        ),
-        child: Text(
-          number,
-          style: const TextStyle(
-            fontSize: 12,
-            fontWeight: FontWeight.w700,
-            color: AppColors.blue,
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 22,
+          height: 22,
+          alignment: Alignment.center,
+          decoration: BoxDecoration(
+            color: AppPalette.resolve(const Color(0xFFE8F0FF)),
+            shape: BoxShape.circle,
+          ),
+          child: Text(
+            number,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: AppColors.blue,
+            ),
           ),
         ),
-      ),
-      const SizedBox(width: 8),
-      Expanded(
-        child: Text(
-          text,
-          textAlign: TextAlign.left,
-          style: const TextStyle(
-            fontSize: 12,
-            height: 1.25,
-            fontWeight: FontWeight.w500,
-            color: AppColors.navy,
+        const SizedBox(width: 8),
+        Expanded(
+          child: Text(
+            text,
+            textAlign: TextAlign.left,
+            style: TextStyle(
+              fontSize: 12,
+              height: 1.25,
+              fontWeight: FontWeight.w500,
+              color: AppColors.navy,
+            ),
           ),
         ),
-      ),
-    ],
+      ],
+    ),
   );
 }
 
@@ -709,87 +734,95 @@ class _DeviceSearchPlaceholderState extends State<_DeviceSearchPlaceholder>
   }
 
   @override
-  Widget build(BuildContext context) => Semantics(
-    label: 'Procurando dispositivos na rede local',
-    child: ClipRRect(
-      borderRadius: BorderRadius.circular(14),
-      child: SizedBox(
-        height: _deviceSearchCardHeight(context),
-        child: Stack(
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: const Color(0xFFF3F5FA),
-                border: Border.all(color: desktopLine),
-                borderRadius: BorderRadius.circular(14),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 14),
-                child: Row(
-                  children: [
-                    Container(
-                      width: 38,
-                      height: 38,
-                      decoration: const BoxDecoration(
-                        color: Color(0xFFE4E8F2),
-                        shape: BoxShape.circle,
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => Semantics(
+      label: tr('Procurando dispositivos na rede local'),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(14),
+        child: SizedBox(
+          height: _deviceSearchCardHeight(context),
+          child: Stack(
+            children: [
+              Container(
+                decoration: BoxDecoration(
+                  color: AppPalette.resolve(const Color(0xFFF3F5FA)),
+                  border: Border.all(color: desktopLine),
+                  borderRadius: BorderRadius.circular(14),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 14),
+                  child: Row(
+                    children: [
+                      Container(
+                        width: 38,
+                        height: 38,
+                        decoration: BoxDecoration(
+                          color: AppPalette.resolve(const Color(0xFFE4E8F2)),
+                          shape: BoxShape.circle,
+                        ),
+                        child: Icon(
+                          Icons.smartphone_rounded,
+                          color: desktopMuted,
+                          size: 20,
+                        ),
                       ),
-                      child: const Icon(
-                        Icons.smartphone_rounded,
-                        color: desktopMuted,
-                        size: 20,
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    const Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Procurando dispositivo',
-                            style: TextStyle(
-                              color: AppColors.navy,
-                              fontWeight: FontWeight.w600,
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              tr('Procurando dispositivo'),
+                              style: TextStyle(
+                                color: AppColors.navy,
+                                fontWeight: FontWeight.w600,
+                              ),
                             ),
-                          ),
-                          SizedBox(height: 3),
-                          Text(
-                            'Verificando a rede local…',
-                            style: TextStyle(fontSize: 13, color: desktopMuted),
-                          ),
+                            const SizedBox(height: 3),
+                            Text(
+                              tr('Verificando a rede local…'),
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: desktopMuted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              Positioned.fill(
+                child: AnimatedBuilder(
+                  animation: _shimmer,
+                  builder: (context, child) => Align(
+                    alignment: Alignment(-1 + (_shimmer.value * 2), 0),
+                    child: FractionallySizedBox(
+                      widthFactor: .3,
+                      heightFactor: 1.6,
+                      child: child,
+                    ),
+                  ),
+                  child: DecoratedBox(
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          AppPalette.resolve(Colors.white).withValues(alpha: 0),
+                          AppPalette.resolve(
+                            Colors.white,
+                          ).withValues(alpha: .7),
+                          AppPalette.resolve(Colors.white).withValues(alpha: 0),
                         ],
                       ),
                     ),
-                  ],
-                ),
-              ),
-            ),
-            Positioned.fill(
-              child: AnimatedBuilder(
-                animation: _shimmer,
-                builder: (context, child) => Align(
-                  alignment: Alignment(-1 + (_shimmer.value * 2), 0),
-                  child: FractionallySizedBox(
-                    widthFactor: .3,
-                    heightFactor: 1.6,
-                    child: child,
-                  ),
-                ),
-                child: DecoratedBox(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [
-                        Colors.white.withValues(alpha: 0),
-                        Colors.white.withValues(alpha: .7),
-                        Colors.white.withValues(alpha: 0),
-                      ],
-                    ),
                   ),
                 ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     ),
@@ -807,40 +840,43 @@ class _DiscoveredDeviceTile extends StatelessWidget {
   final VoidCallback onTap;
 
   @override
-  Widget build(BuildContext context) => Container(
-    decoration: BoxDecoration(
-      color: const Color(0xFFF7F8FC),
-      borderRadius: BorderRadius.circular(14),
-      border: Border.all(color: desktopLine),
-    ),
-    child: ListTile(
-      contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
-      leading: Container(
-        width: 38,
-        height: 38,
-        decoration: const BoxDecoration(
-          color: Color(0xFFE8F0FF),
-          shape: BoxShape.circle,
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => Container(
+      decoration: BoxDecoration(
+        color: AppPalette.resolve(const Color(0xFFF7F8FC)),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: desktopLine),
+      ),
+      child: ListTile(
+        contentPadding: const EdgeInsets.symmetric(horizontal: 14, vertical: 4),
+        leading: Container(
+          width: 38,
+          height: 38,
+          decoration: BoxDecoration(
+            color: AppPalette.resolve(const Color(0xFFE8F0FF)),
+            shape: BoxShape.circle,
+          ),
+          child: const Icon(
+            Icons.smartphone_rounded,
+            color: AppColors.blue,
+            size: 20,
+          ),
         ),
-        child: const Icon(
-          Icons.smartphone_rounded,
+        title: Text(
+          phone.name,
+          style: TextStyle(color: AppColors.navy, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          tr('Dispositivo encontrado'),
+          style: TextStyle(fontSize: 13, color: desktopMuted),
+        ),
+        trailing: const Icon(
+          Icons.chevron_right_rounded,
           color: AppColors.blue,
-          size: 20,
         ),
+        onTap: onTap,
       ),
-      title: Text(
-        phone.name,
-        style: const TextStyle(
-          color: AppColors.navy,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
-      subtitle: const Text(
-        'Dispositivo encontrado',
-        style: TextStyle(fontSize: 13, color: desktopMuted),
-      ),
-      trailing: const Icon(Icons.chevron_right_rounded, color: AppColors.blue),
-      onTap: onTap,
     ),
   );
 }

@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'dart:async';
 import 'dart:io';
 
@@ -17,7 +19,7 @@ class DesktopUpdatePage extends StatefulWidget {
 class _DesktopUpdatePageState extends State<DesktopUpdatePage> {
   final _checker = const DesktopUpdateChecker();
   double? _progress;
-  String _message = 'Procurando atualizações...';
+  String _message = tr('Procurando atualizações...');
   bool _finished = false;
 
   @override
@@ -35,7 +37,10 @@ class _DesktopUpdatePageState extends State<DesktopUpdatePage> {
     }
 
     setState(() {
-      _message = 'Baixando a versão ${update.version}...';
+      _message = tx(
+        'Baixando a versão ${update.version}...',
+        'Downloading version ${update.version}...',
+      );
       _progress = 0;
     });
     try {
@@ -47,7 +52,7 @@ class _DesktopUpdatePageState extends State<DesktopUpdatePage> {
       );
       if (!mounted) return;
       setState(() {
-        _message = 'Atualização pronta. Reiniciando...';
+        _message = tr('Atualização pronta. Reiniciando...');
         _progress = 1;
       });
       await Future<void>.delayed(const Duration(milliseconds: 500));
@@ -74,61 +79,66 @@ class _DesktopUpdatePageState extends State<DesktopUpdatePage> {
   }
 
   @override
-  Widget build(BuildContext context) => Scaffold(
-    backgroundColor: Colors.white,
-    body: Center(
-      child: ConstrainedBox(
-        constraints: const BoxConstraints(maxWidth: 420),
-        child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 28),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 64,
-                height: 64,
-                padding: const EdgeInsets.all(14),
-                decoration: BoxDecoration(
-                  color: const Color(0xFFEFF3FF),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: const Icon(
-                  Icons.shield_rounded,
-                  color: AppColors.blue,
-                  size: 36,
-                ),
-              ),
-              const SizedBox(height: 24),
-              const Text(
-                'PassDrive',
-                style: TextStyle(
-                  color: AppColors.navy,
-                  fontSize: 24,
-                  fontWeight: FontWeight.w700,
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                _message,
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Color(0xFF687899),
-                  fontSize: 15,
-                ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                height: 6,
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(20),
-                  child: LinearProgressIndicator(
-                    value: _progress,
-                    backgroundColor: const Color(0xFFE7ECF6),
+  Widget build(BuildContext context) => AppPalette.watch(
+    context,
+    () => Scaffold(
+      backgroundColor: AppPalette.resolve(Colors.white),
+      body: Center(
+        child: ConstrainedBox(
+          constraints: const BoxConstraints(maxWidth: 420),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  padding: const EdgeInsets.all(14),
+                  decoration: BoxDecoration(
+                    color: AppPalette.resolve(const Color(0xFFEFF3FF)),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.shield_rounded,
                     color: AppColors.blue,
+                    size: 36,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 24),
+                Text(
+                  'PassDrive',
+                  style: TextStyle(
+                    color: AppColors.navy,
+                    fontSize: 24,
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Text(
+                  _message,
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: AppPalette.resolve(const Color(0xFF687899)),
+                    fontSize: 15,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                SizedBox(
+                  height: 6,
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(20),
+                    child: LinearProgressIndicator(
+                      value: _progress,
+                      backgroundColor: AppPalette.resolve(
+                        const Color(0xFFE7ECF6),
+                      ),
+                      color: AppColors.blue,
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),

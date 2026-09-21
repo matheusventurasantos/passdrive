@@ -1,7 +1,9 @@
+import '../settings/app_strings.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../vault/vault_models.dart';
+import '../settings/appearance_preferences.dart';
 import 'sync_protocol.dart';
 import 'sync_store.dart';
 
@@ -21,7 +23,7 @@ class DesktopSync extends ChangeNotifier {
   DeviceGrant? get grant => preferences.devices.values.firstOrNull;
   String name = Platform.localHostname;
   String target = '';
-  String status = 'Nenhum dispositivo conectado';
+  String status = tr('Nenhum dispositivo conectado');
   String? error;
   bool searching = false, syncing = false, _disposed = false;
   int _handshakes = 0;
@@ -34,6 +36,8 @@ class DesktopSync extends ChangeNotifier {
   final Map<String, Completer<String>> _requests = {};
   final Map<String, List<DateTime>> _handshakeAttempts = {};
   bool get connected => _link != null && snapshot != null;
+  bool get trusted => grant?.trusted == true;
+  bool get lockOnFocusLoss => grant?.lockOnFocusLoss ?? true;
   int get port => _server?.port ?? 0;
   List<LanPeer> get phones => searching
       ? discovery?.peers.values.where((p) => p.role == 'phone').toList() ?? []
@@ -56,9 +60,9 @@ class DesktopSync extends ChangeNotifier {
           'name': name.length > 80 ? name.substring(0, 80) : name,
           'role': 'desktop',
           'port': _server!.port,
-          'ticket': grant == null && ticket?.valid() == true ? ticket!.id : '',
+          'ticket': !trusted && ticket?.valid() == true ? ticket!.id : '',
           'target': target,
-          'resume': grant?.id ?? '',
+          'resume': trusted ? grant!.id : '',
         },
         onChanged: _changed,
       );
@@ -67,19 +71,20 @@ class DesktopSync extends ChangeNotifier {
         discovery?.close();
         return;
       }
-      status = grant == null
-          ? 'Nenhum dispositivo conectado'
-          : 'Aguardando o celular autorizado na rede';
+      status = trusted
+          ? tr('Aguardando o celular autorizado na rede')
+          : tr('Nenhum dispositivo conectado');
       _timer = Timer.periodic(const Duration(seconds: 5), (_) => _tick());
-      if (grant == null) {
+      if (!trusted) {
         detect();
       } else {
         _changed();
       }
     } on Object {
-      error =
-          'Não foi possível preparar a conexão local. Confira a rede e tente novamente.';
-      status = 'Erro de conexão';
+      error = tr(
+        'Não foi possível preparar a conexão local. Confira a rede e tente novamente.',
+      );
+      status = tr('Erro de conexão');
       _changed();
     }
   }
@@ -97,8 +102,8 @@ class DesktopSync extends ChangeNotifier {
         return;
       }
       searching = false;
-      error = 'Nenhum dispositivo encontrado. Verifique a rede local.';
-      status = 'Nenhum dispositivo conectado';
+      error = tr('Nenhum dispositivo encontrado. Verifique a rede local.');
+      status = tr('Nenhum dispositivo conectado');
       _searchTimeout = null;
       _changed();
     });
@@ -111,13 +116,13 @@ class DesktopSync extends ChangeNotifier {
     searching = false;
     newTicket();
     target = phone.id;
-    status = 'Digite este código no celular';
+    status = tr('Digite este código no celular');
     discovery?.announce();
     _changed();
   }
 
   void newTicket() {
-    if (grant != null || _link != null) return;
+    if (trusted || _link != null) return;
     _searchTimeout?.cancel();
     _searchTimeout = null;
     ticket?.cancel();
@@ -125,7 +130,7 @@ class DesktopSync extends ChangeNotifier {
     target = '';
     error = null;
     _generation++;
-    status = 'Nenhum dispositivo conectado';
+    status = tr('Nenhum dispositivo conectado');
     discovery?.announce();
     _changed();
   }
@@ -167,7 +172,7 @@ class DesktopSync extends ChangeNotifier {
       wire = SyncWire(await WebSocketTransformer.upgrade(request));
       final hello = await wire.read(const Duration(seconds: 8));
       if (hello['v'] != syncVersion || hello['desktopId'] != preferences.id) {
-        throw const FormatException('Dispositivo não autorizado.');
+        throw FormatException(tr('Dispositivo não autorizado.'));
       }
       final phoneId = safeString(hello['phoneId']);
       final mode = safeString(hello['mode']);
@@ -177,16 +182,16 @@ class DesktopSync extends ChangeNotifier {
       if (resume) {
         final g = grant;
         if (g == null || g.id != phoneId || !g.valid()) {
-          throw const FormatException('Autorização expirada ou revogada.');
+          throw FormatException(tr('Autorização expirada ou revogada.'));
         }
         secret = g.secret;
       } else {
-        if (grant != null ||
+        if (trusted ||
             currentTicket == null ||
             hello['ticket'] != currentTicket.id ||
             !['code', 'qr'].contains(mode) ||
             (mode == 'code' && target != phoneId)) {
-          throw const FormatException('Pareamento não autorizado.');
+          throw FormatException(tr('Pareamento não autorizado.'));
         }
         currentTicket.claimAttempt();
         secret = mode == 'qr' ? currentTicket.qrSecret : currentTicket.code;
@@ -202,7 +207,7 @@ class DesktopSync extends ChangeNotifier {
           (!resume &&
               (currentTicket!.consumed ||
                   DateTime.now().isAfter(currentTicket.expiresAt)))) {
-        throw const FormatException('Pareamento expirado.');
+        throw FormatException(tr('Pareamento expirado.'));
       }
       wire.send(reply);
       final link = SyncLink(
@@ -255,7 +260,7 @@ class DesktopSync extends ChangeNotifier {
       }
       error = e is FormatException
           ? e.message.toString()
-          : 'Não foi possível autorizar esta conexão.';
+          : tr('Não foi possível autorizar esta conexão.');
       try {
         wire?.send({'error': error});
         await wire?.close();
@@ -274,6 +279,7 @@ class DesktopSync extends ChangeNotifier {
         if (_disposed || _link != link || grant?.valid() != true) break;
         switch (message['type']) {
           case 'snapshot':
+            AppearancePreferences.instance.applyRemoteTheme(message['theme']);
             snapshot = VaultSnapshot.fromJson(
               Map<String, Object?>.from(message['snapshot'] as Map),
             );
@@ -299,8 +305,9 @@ class DesktopSync extends ChangeNotifier {
           case 'revoked':
             await disconnect(
               forget: true,
-              message:
-                  'A conexão foi encerrada pelo celular. Faça um novo pareamento.',
+              message: tr(
+                'A conexão foi encerrada pelo celular. Faça um novo pareamento.',
+              ),
             );
             return;
           case 'ping':
@@ -308,7 +315,7 @@ class DesktopSync extends ChangeNotifier {
           case 'pong':
             break;
           default:
-            throw const FormatException('Mensagem de sincronização inválida.');
+            throw FormatException(tr('Mensagem de sincronização inválida.'));
         }
       }
     } on Object {
@@ -316,7 +323,9 @@ class DesktopSync extends ChangeNotifier {
     }
     if (!_disposed && _link == link) {
       await disconnect(
-        message: 'Celular desconectado. Aguardando reconexão na rede local.',
+        message: tr(
+          'Celular desconectado. Aguardando reconexão na rede local.',
+        ),
       );
     }
   }
@@ -338,7 +347,7 @@ class DesktopSync extends ChangeNotifier {
 
   Future<String> request(RemoteAction action) async {
     if (!connected || _requests.isNotEmpty) {
-      return 'Conclua a solicitação atual no celular.';
+      return tr('Conclua a solicitação atual no celular.');
     }
     final result = Completer<String>();
     _requests[action.requestId] = result;
@@ -346,11 +355,12 @@ class DesktopSync extends ChangeNotifier {
       await _link!.send({'type': 'action', 'action': action.toJson()});
       return await result.future.timeout(
         const Duration(minutes: 3),
-        onTimeout: () =>
-            'A conclusão continua no celular. Você pode seguir usando o computador.',
+        onTimeout: () => tr(
+          'A conclusão continua no celular. Você pode seguir usando o computador.',
+        ),
       );
     } on Object {
-      return 'O celular foi desconectado.';
+      return tr('O celular foi desconectado.');
     } finally {
       _requests.remove(action.requestId);
     }
@@ -360,7 +370,7 @@ class DesktopSync extends ChangeNotifier {
     if (grant != null && !grant!.valid()) {
       await disconnect(
         forget: true,
-        message: 'Sessão expirada. Conecte novamente.',
+        message: tr('Sessão expirada. Conecte novamente.'),
       );
       return;
     }
@@ -388,10 +398,13 @@ class DesktopSync extends ChangeNotifier {
     final old = _link;
     _link = null;
     snapshot = null;
+    AppearancePreferences.instance.applyRemoteTheme(null);
     syncing = false;
     status = message;
     for (final request in _requests.values) {
-      if (!request.isCompleted) request.complete('A conexão foi encerrada.');
+      if (!request.isCompleted) {
+        request.complete(tr('A conexão foi encerrada.'));
+      }
     }
     _requests.clear();
     _changed();
@@ -408,8 +421,9 @@ class DesktopSync extends ChangeNotifier {
         target = '';
       }
     } on Object {
-      error =
-          'A conexão foi bloqueada, mas não foi possível salvar a revogação local.';
+      error = tr(
+        'A conexão foi bloqueada, mas não foi possível salvar a revogação local.',
+      );
     } finally {
       await old?.close();
       discovery?.announce();
@@ -424,6 +438,7 @@ class DesktopSync extends ChangeNotifier {
   @override
   void dispose() {
     _disposed = true;
+    AppearancePreferences.instance.applyRemoteTheme(null);
     _generation++;
     _timer?.cancel();
     _searchTimeout?.cancel();
@@ -433,7 +448,9 @@ class DesktopSync extends ChangeNotifier {
     _link = null;
     link?.close();
     for (final pending in _requests.values) {
-      if (!pending.isCompleted) pending.complete('A conexão foi encerrada.');
+      if (!pending.isCompleted) {
+        pending.complete(tr('A conexão foi encerrada.'));
+      }
     }
     _requests.clear();
     _server?.close(force: true);

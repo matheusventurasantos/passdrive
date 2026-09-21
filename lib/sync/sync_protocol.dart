@@ -1,3 +1,4 @@
+import '../settings/app_strings.dart';
 import 'dart:async';
 import 'dart:convert';
 import 'dart:io';
@@ -35,18 +36,18 @@ String safeString(Object? value, {int max = 160}) {
       value.isEmpty ||
       value.length > max ||
       value.contains(RegExp(r'[\x00-\x1f]'))) {
-    throw const FormatException('Mensagem de conexão inválida.');
+    throw FormatException(tr('Mensagem de conexão inválida.'));
   }
   return value;
 }
 
 Map<String, dynamic> jsonObject(Object? raw) {
   if (raw is! String || raw.length > maxSyncBytes) {
-    throw const FormatException('Mensagem de conexão inválida.');
+    throw FormatException(tr('Mensagem de conexão inválida.'));
   }
   final decoded = jsonDecode(raw);
   if (decoded is! Map<String, dynamic>) {
-    throw const FormatException('Mensagem de conexão inválida.');
+    throw FormatException(tr('Mensagem de conexão inválida.'));
   }
   return decoded;
 }
@@ -77,8 +78,8 @@ class PairingTicket {
       !consumed && attempts < 3 && (now ?? DateTime.now()).isBefore(expiresAt);
   void claimAttempt() {
     if (!valid()) {
-      throw const FormatException(
-        'Código expirado. Gere uma nova conexão no computador.',
+      throw FormatException(
+        tr('Código expirado. Gere uma nova conexão no computador.'),
       );
     }
     attempts++;
@@ -143,9 +144,7 @@ class SrpHost {
   Map<String, dynamic> verify(Map<String, dynamic> proof) {
     server.calculateSecret(_integer(proof['A']));
     if (!server.verifyClientEvidenceMessage(_integer(proof['M1']))) {
-      throw const FormatException(
-        'Código incorreto ou conexão não autorizada.',
-      );
+      throw FormatException(tr('Código incorreto ou conexão não autorizada.'));
     }
     return {'M2': server.calculateServerEvidenceMessage()!.toRadixString(16)};
   }
@@ -180,7 +179,7 @@ class SrpPhone {
 
   String verify(Map<String, dynamic> reply) {
     if (!client.verifyServerEvidenceMessage(_integer(reply['M2']))) {
-      throw const FormatException('O computador não pôde ser autenticado.');
+      throw FormatException(tr('O computador não pôde ser autenticado.'));
     }
     return client.calculateSessionKey()!.toRadixString(16);
   }
@@ -194,7 +193,7 @@ class SyncWire {
     Duration timeout = const Duration(seconds: 25),
   ]) async {
     if (!await incoming.moveNext().timeout(timeout)) {
-      throw const SocketException('Dispositivo desconectado.');
+      throw SocketException(tr('Dispositivo desconectado.'));
     }
     final data = jsonObject(incoming.current);
     if (data['error'] != null) throw FormatException(safeString(data['error']));
@@ -249,7 +248,7 @@ class SyncCipher {
       (ByteData(12)..setUint64(4, counter)).buffer.asUint8List();
   Future<Map<String, dynamic>> encrypt(Map<String, dynamic> message) async {
     final key = _sendKey;
-    if (key == null) throw StateError('Conexão encerrada.');
+    if (key == null) throw StateError(tr('Conexão encerrada.'));
     final sequence = _sent++;
     final box = await _aes.encrypt(
       _bytes(jsonEncode(message)),
@@ -266,7 +265,7 @@ class SyncCipher {
   Future<Map<String, dynamic>> decrypt(Map<String, dynamic> message) async {
     final key = _receiveKey;
     if (key == null || message['sequence'] != _received) {
-      throw const FormatException('Mensagem repetida ou fora de ordem.');
+      throw FormatException(tr('Mensagem repetida ou fora de ordem.'));
     }
     final body = base64Decode(safeString(message['body'], max: maxSyncBytes));
     if (body.length < 16) throw const FormatException();
@@ -297,8 +296,8 @@ class SyncCipher {
     }
     if (_receivedMessagesInWindow >= maxSyncMessagesPerWindow ||
         bytes > maxSyncBytesPerWindow - _receivedBytesInWindow) {
-      throw const FormatException(
-        'Limite de mensagens de sincronização excedido.',
+      throw FormatException(
+        tr('Limite de mensagens de sincronização excedido.'),
       );
     }
     _receivedMessagesInWindow++;
@@ -320,7 +319,7 @@ class SyncLink {
   DateTime lastSeen = DateTime.now();
   Future<void> send(Map<String, dynamic> message) {
     final next = _outgoing.then((_) async {
-      if (closed) throw StateError('Conexão encerrada.');
+      if (closed) throw StateError(tr('Conexão encerrada.'));
       wire.send(await cipher.encrypt(message));
     });
     _outgoing = next.catchError((_) {});

@@ -1,3 +1,5 @@
+import '../settings/app_strings.dart';
+import '../theme/app_palette.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../sync/sync_status.dart';
@@ -14,8 +16,9 @@ class DesktopWindowFrame extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return ColoredBox(
-      color: Colors.white,
+      color: AppPalette.resolve(Colors.white),
       child: Column(
         children: [
           const _DesktopTitleBar(),
@@ -75,10 +78,11 @@ class _DesktopTitleBarState extends State<_DesktopTitleBar>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return SizedBox(
       height: 48,
       child: Material(
-        color: Colors.white,
+        color: AppPalette.resolve(Colors.white),
         child: Row(
           children: [
             Expanded(
@@ -101,7 +105,7 @@ class _DesktopTitleBarState extends State<_DesktopTitleBar>
                           status,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
+                          style: TextStyle(
                             color: AppColors.navy,
                             fontSize: 13,
                             fontWeight: FontWeight.w500,
@@ -115,12 +119,12 @@ class _DesktopTitleBarState extends State<_DesktopTitleBar>
               ),
             ),
             _WindowButton(
-              tooltip: 'Minimizar',
+              tooltip: tr('Minimizar'),
               icon: Icons.remove_rounded,
               onTap: () => _invoke('minimize'),
             ),
             _WindowButton(
-              tooltip: _maximized ? 'Restaurar' : 'Maximizar',
+              tooltip: _maximized ? tr('Restaurar') : tr('Maximizar'),
               icon: _maximized
                   ? Icons.filter_none_rounded
                   : Icons.crop_square_rounded,
@@ -130,7 +134,7 @@ class _DesktopTitleBarState extends State<_DesktopTitleBar>
               },
             ),
             _WindowButton(
-              tooltip: 'Fechar',
+              tooltip: tr('Fechar'),
               icon: Icons.close_rounded,
               isClose: true,
               onTap: () => _invoke('close'),
@@ -171,16 +175,17 @@ class _ConnectionSignalState extends State<_ConnectionSignal>
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return ValueListenableBuilder<bool>(
       valueListenable: desktopConnectionOnline,
       builder: (context, online, _) {
         final color = online
-            ? const Color(0xFF40B878)
-            : const Color(0xFF8D99AE);
+            ? AppPalette.resolve(const Color(0xFF40B878))
+            : AppPalette.resolve(const Color(0xFF8D99AE));
         return Semantics(
           label: online
-              ? 'Dispositivo conectado'
-              : 'Nenhum dispositivo conectado',
+              ? tr('Dispositivo conectado')
+              : tr('Nenhum dispositivo conectado'),
           child: SizedBox.square(
             dimension: 16,
             child: AnimatedBuilder(
@@ -236,19 +241,24 @@ class _WindowButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    Theme.of(context);
     return Tooltip(
       message: tooltip,
       child: InkWell(
         onTap: onTap,
         borderRadius: BorderRadius.circular(10),
-        hoverColor: isClose ? const Color(0xFFFFE9EC) : const Color(0xFFF1F3F9),
+        hoverColor: isClose
+            ? AppPalette.resolve(const Color(0xFFFFE9EC))
+            : AppPalette.resolve(const Color(0xFFF1F3F9)),
         child: SizedBox(
           width: 42,
           height: 38,
           child: Icon(
             icon,
             size: 17,
-            color: isClose ? const Color(0xFFD94A5B) : AppColors.navy,
+            color: isClose
+                ? AppPalette.resolve(const Color(0xFFD94A5B))
+                : AppColors.navy,
           ),
         ),
       ),

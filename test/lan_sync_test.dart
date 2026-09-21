@@ -316,9 +316,11 @@ void main() {
       }
     });
     test(
-      'reabrir desktop reconecta com autorização persistida, sem login',
+      'computador confiável reconecta ao reabrir sem QR Code ou código',
       () async {
         await pair();
+        await phone.setTrusted(desktop.preferences.id, true);
+        await eventually(() => desktop.trusted);
         final phoneGrant = phone.preferences.devices.values.single;
         desktop.dispose();
         await eventually(() => phone.links.isEmpty);
@@ -331,6 +333,22 @@ void main() {
           mode: 'resume',
         );
         await eventually(() => desktop.connected);
+      },
+    );
+    test(
+      'as preferências de confiança e foco são individuais e persistem',
+      () async {
+        await pair();
+        final id = desktop.preferences.id;
+        expect(phone.preferences.devices[id]!.trusted, isFalse);
+        expect(phone.preferences.devices[id]!.lockOnFocusLoss, isTrue);
+        await phone.setTrusted(id, true);
+        await phone.setLockOnFocusLoss(id, false);
+        await eventually(() => desktop.trusted && !desktop.lockOnFocusLoss);
+        final restored = SyncPreferences(phoneStore);
+        await restored.load();
+        expect(restored.devices[id]!.trusted, isTrue);
+        expect(restored.devices[id]!.lockOnFocusLoss, isFalse);
       },
     );
     test('perda de rede limpa visualização mas permite reconectar', () async {
